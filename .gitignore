@@ -1,16 +1,59 @@
-# Compiled class file
+# =========================
+# Java
+# =========================
 *.class
 
-# Log file
+# =========================
+# Maven
+# =========================
+target/
+**/target/
+
+# Maven wrapper cache
+.mvn/timing.properties
+
+# =========================
+# Logs
+# =========================
 *.log
+logs/
 
-# BlueJ files
-*.ctxt
+# =========================
+# Eclipse / STS
+# =========================
+.classpath
+.project
+.settings/
+.factorypath
+.metadata/
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# =========================
+# IntelliJ IDEA
+# =========================
+.idea/
+*.iml
 
-# Package Files #
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+application-secret.properties
+application-secret.yml
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Package files
+# =========================
 *.jar
 *.war
 *.nar
@@ -19,6 +62,10 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# =========================
+# Other Java / JVM files
+# =========================
+*.ctxt
+.mtj.tmp/
 hs_err_pid*
 replay_pid*
