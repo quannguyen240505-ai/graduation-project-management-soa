@@ -1,8 +1,66 @@
 package com.graduation.auth.service;
-import com.graduation.auth.dto.*; import com.graduation.auth.entity.*; import com.graduation.auth.exception.ApiException; import com.graduation.auth.repository.UserRepository; import org.springframework.http.HttpStatus; import org.springframework.security.crypto.password.PasswordEncoder; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional;
+
+import com.graduation.auth.dto.*;
+import com.graduation.auth.entity.*;
+import com.graduation.auth.exception.ApiException;
+import com.graduation.auth.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
-public class AuthenticationService{ private final UserRepository repo; private final PasswordEncoder encoder; private final JwtService jwt; public AuthenticationService(UserRepository r,PasswordEncoder e,JwtService j){repo=r;encoder=e;jwt=j;}
- @Transactional public AuthResponse registerStudent(RegisterRequest q){ String code=q.userCode().trim(), email=q.email().trim().toLowerCase(); if(repo.existsByUserCode(code)) throw new ApiException(HttpStatus.CONFLICT,"UserCode đã tồn tại"); if(repo.existsByEmail(email)) throw new ApiException(HttpStatus.CONFLICT,"Email đã tồn tại"); User u=new User(); u.setUserCode(code); u.setPassword(encoder.encode(q.password())); u.setFullName(q.fullName().trim()); u.setEmail(email); u.setPhone(trim(q.phone())); u.setClassName(trim(q.className())); u.setDepartment(trim(q.department())); u.setRole(Role.STUDENT); u.setStatus(UserStatus.ACTIVE); return response(repo.save(u)); }
- @Transactional(readOnly=true) public AuthResponse login(LoginRequest q){ User u=repo.findByUserCode(q.userCode().trim()).orElseThrow(()->new ApiException(HttpStatus.UNAUTHORIZED,"UserCode hoặc mật khẩu không đúng")); if(u.getStatus()!=UserStatus.ACTIVE) throw new ApiException(HttpStatus.FORBIDDEN,"Tài khoản hiện không hoạt động"); if(!encoder.matches(q.password(),u.getPassword())) throw new ApiException(HttpStatus.UNAUTHORIZED,"UserCode hoặc mật khẩu không đúng"); return response(u);}
- private AuthResponse response(User u){return new AuthResponse(jwt.generateToken(u),"Bearer",jwt.getExpirationSeconds(),u.getId(),u.getUserCode(),u.getFullName(),u.getRole().name());}
- private String trim(String v){if(v==null)return null; String t=v.trim(); return t.isEmpty()?null:t;} }
+public class AuthenticationService {
+	private final UserRepository repo;
+	private final PasswordEncoder encoder;
+	private final JwtService jwt;
+
+	public AuthenticationService(UserRepository r, PasswordEncoder e, JwtService j) {
+		repo = r;
+		encoder = e;
+		jwt = j;
+	}
+
+	@Transactional
+	public AuthResponse registerStudent(RegisterRequest q) {
+		String code = q.userCode().trim(), email = q.email().trim().toLowerCase();
+		if (repo.existsByUserCode(code))
+			throw new ApiException(HttpStatus.CONFLICT, "UserCode đã tồn tại");
+		if (repo.existsByEmail(email))
+			throw new ApiException(HttpStatus.CONFLICT, "Email đã tồn tại");
+		User u = new User();
+		u.setUserCode(code);
+		u.setPassword(encoder.encode(q.password()));
+		u.setFullName(q.fullName().trim());
+		u.setEmail(email);
+		u.setPhone(trim(q.phone()));
+		u.setClassName(trim(q.className()));
+		u.setDepartment(trim(q.department()));
+		u.setRole(Role.STUDENT);
+		u.setStatus(UserStatus.ACTIVE);
+		return response(repo.save(u));
+	}
+
+	@Transactional(readOnly = true)
+	public AuthResponse login(LoginRequest q) {
+		User u = repo.findByUserCode(q.userCode().trim())
+				.orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UserCode hoặc mật khẩu không đúng"));
+		if (u.getStatus() != UserStatus.ACTIVE)
+			throw new ApiException(HttpStatus.FORBIDDEN, "Tài khoản hiện không hoạt động");
+		if (!encoder.matches(q.password(), u.getPassword()))
+			throw new ApiException(HttpStatus.UNAUTHORIZED, "UserCode hoặc mật khẩu không đúng");
+		return response(u);
+	}
+
+	private AuthResponse response(User u) {
+		return new AuthResponse(jwt.generateToken(u), "Bearer", jwt.getExpirationSeconds(), u.getId(), u.getUserCode(),
+				u.getFullName(), u.getRole().name());
+	}
+
+	private String trim(String v) {
+		if (v == null)
+			return null;
+		String t = v.trim();
+		return t.isEmpty() ? null : t;
+	}
+}
