@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/auth/**
+            - id: topic-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/topics/**
+            - id: registration-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/registrations/**
+            - id: notification-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/notifications/**
+
+jwt:
+  issuer: graduation-project-auth
+  secret: ${JWT_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
