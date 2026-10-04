@@ -48,6 +48,8 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/api/auth/users/*")
                         .authenticated()
+                        .requestMatchers("/api/users/me")
+                        .authenticated()
                         .anyRequest()
                         .denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2

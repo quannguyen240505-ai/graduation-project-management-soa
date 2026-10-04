@@ -1,2 +1,5 @@
 package com.graduation.auth.entity;
-public enum Role { STUDENT, LECTURER, ADMIN }
+
+public enum Role {
+	STUDENT, LECTURER, ADMIN
+}
