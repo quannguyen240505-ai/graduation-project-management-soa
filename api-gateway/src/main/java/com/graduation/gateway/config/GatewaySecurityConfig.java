@@ -51,6 +51,9 @@ public class GatewaySecurityConfig {
 						.pathMatchers(HttpMethod.GET, "/api/auth/users/**").authenticated()
 
 						// Topic
+						// Counter chỉ được gọi giữa các service qua Eureka.
+						.pathMatchers("/api/topics/*/registrations/*/capacity").denyAll()
+
 						.pathMatchers(HttpMethod.GET, "/api/topics/**").hasAnyRole("STUDENT", "LECTURER", "ADMIN")
 
 						.pathMatchers(HttpMethod.POST, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
@@ -60,6 +63,12 @@ public class GatewaySecurityConfig {
 						.pathMatchers(HttpMethod.DELETE, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
 
 						// Registration + Notification
+						.pathMatchers(HttpMethod.PUT, "/api/registrations/*/status")
+						.hasAnyRole("LECTURER", "ADMIN")
+
+						.pathMatchers(HttpMethod.DELETE, "/api/registrations/*")
+						.hasAnyRole("LECTURER", "ADMIN")
+
 						.pathMatchers("/api/registrations/**", "/api/notifications/**").authenticated()
 
 						.anyExchange().authenticated())

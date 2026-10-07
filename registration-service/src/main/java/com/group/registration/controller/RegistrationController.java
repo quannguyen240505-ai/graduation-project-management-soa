@@ -62,18 +62,21 @@ public class RegistrationController {
     @PutMapping("/{id}/status")
     public Registration updateStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
 
         return service.updateStatus(
                 id,
-                body.get("status"));
+                body.get("status"),
+                authorization);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
 
-        service.delete(id);
+        service.delete(id, authorization);
 
         return ResponseEntity
                 .noContent()
