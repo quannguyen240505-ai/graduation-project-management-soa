@@ -6,9 +6,9 @@ spring:
     name: topic-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/graduation_management
+    url: jdbc:mysql://localhost:3306/graduation_project
     username: root
-    password: ${DB_PASSWORD}
+    password: 291105
 
   jpa:
     hibernate:
