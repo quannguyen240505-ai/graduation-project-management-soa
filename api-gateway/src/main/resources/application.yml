@@ -11,29 +11,39 @@ spring:
         webflux:
           routes:
             - id: auth-service
-              uri: http://localhost:8081
+              uri: lb://AUTH-SERVICE
               predicates:
                 - Path=/api/auth/**
 
             - id: auth-users
-              uri: http://localhost:8081
+              uri: lb://AUTH-SERVICE
               predicates:
                 - Path=/api/users/**
 
             - id: topic-service
-              uri: http://localhost:8082
+              uri: lb://TOPIC-SERVICE
               predicates:
                 - Path=/api/topics/**
 
             - id: registration-service
-              uri: http://localhost:8083
+              uri: lb://REGISTRATION-SERVICE
               predicates:
                 - Path=/api/registrations/**
 
             - id: notification-service
-              uri: http://localhost:8084
+              uri: lb://NOTIFICATION-SERVICE
               predicates:
                 - Path=/api/notifications/**
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
 
 jwt:
   issuer: graduation-project-auth

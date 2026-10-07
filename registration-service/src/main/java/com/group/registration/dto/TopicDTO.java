@@ -1,12 +1,44 @@
 package com.group.registration.dto;
 
-import lombok.Data;
-
-@Data
 public class TopicDTO {
+
     private Long id;
-    private String topicName;
     private Integer maxStudents;
     private Integer currentStudents;
-    private String status; // Cần kiểm tra status = "OPEN"
+    private String status;
+
+    public TopicDTO() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Integer getMaxStudents() {
+        return maxStudents;
+    }
+
+    public void setMaxStudents(Integer maxStudents) {
+        this.maxStudents = maxStudents;
+    }
+
+    public Integer getCurrentStudents() {
+        return currentStudents;
+    }
+
+    public void setCurrentStudents(Integer currentStudents) {
+        this.currentStudents = currentStudents;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }
