@@ -1,38 +1,59 @@
 package com.graduation.auth.config;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.*;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+
+/** Cấu hình khóa, tạo token và kiểm tra JWT. */
 @Configuration
 public class JwtConfig {
-	@Bean
-	SecretKey jwtSecretKey(@Value("${jwt.secret}") String secret) {
-		byte[] b = secret.getBytes(StandardCharsets.UTF_8);
-		if (b.length < 32)
-			throw new IllegalStateException("JWT_SECRET phải có ít nhất 32 bytes để dùng HS256");
-		return new SecretKeySpec(b, "HmacSHA256");
-	}
 
-	@Bean
-	JwtEncoder jwtEncoder(SecretKey key) {
-		return NimbusJwtEncoder.withSecretKey(key).algorithm(MacAlgorithm.HS256).build();
-	}
+    @Bean
+    public SecretKey jwtSecretKey(
+            @Value("${jwt.secret}") String secret) {
 
-	@Bean
-	public JwtDecoder jwtDecoder(SecretKey secretKey, @Value("${jwt.issuer}") String issuer) {
-		{
+        byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
 
-			NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey).macAlgorithm(MacAlgorithm.HS256)
-					.build();
+        if (bytes.length < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET phải có ít nhất 32 bytes để dùng HS256");
+        }
 
-			decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
+        return new SecretKeySpec(bytes, "HmacSHA256");
+    }
 
-			return decoder;
-		}
-	}
+    /** Tạo JWT bằng thuật toán HS256. */
+    @Bean
+    public JwtEncoder jwtEncoder(SecretKey key) {
+        return NimbusJwtEncoder.withSecretKey(key)
+                .algorithm(MacAlgorithm.HS256)
+                .build();
+    }
+
+    /** Kiểm tra chữ ký, thời hạn và issuer của JWT. */
+    @Bean
+    public JwtDecoder jwtDecoder(
+            SecretKey key,
+            @Value("${jwt.issuer}") String issuer) {
+
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(key)
+                .macAlgorithm(MacAlgorithm.HS256)
+                .build();
+
+        decoder.setJwtValidator(
+                JwtValidators.createDefaultWithIssuer(issuer));
+
+        return decoder;
+    }
 }
