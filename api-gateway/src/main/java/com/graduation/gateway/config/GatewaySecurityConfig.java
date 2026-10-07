@@ -59,8 +59,37 @@ public class GatewaySecurityConfig {
 
 						.pathMatchers(HttpMethod.DELETE, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
 
-						// Registration + Notification
-						.pathMatchers("/api/registrations/**", "/api/notifications/**").authenticated()
+						// ========================
+						// Registration
+						// ========================
+
+						// Sinh viên được tạo đăng ký
+						.pathMatchers(HttpMethod.POST, "/api/registrations").hasRole("STUDENT")
+
+						// Danh sách / chi tiết đăng ký:
+						// hiện API trả dữ liệu chung nên chỉ Lecturer/Admin được xem
+						.pathMatchers(HttpMethod.GET, "/api/registrations/**").hasAnyRole("LECTURER", "ADMIN")
+
+						// Chỉ Lecturer/Admin được duyệt hoặc từ chối
+						.pathMatchers(HttpMethod.PUT, "/api/registrations/*/status").hasAnyRole("LECTURER", "ADMIN")
+
+						// Chỉ Lecturer/Admin được xóa
+						.pathMatchers(HttpMethod.DELETE, "/api/registrations/**").hasAnyRole("LECTURER", "ADMIN")
+
+						// ========================
+						// Notification
+						// ========================
+
+						// Tạm thời ADMIN mới được xem toàn bộ notification
+						.pathMatchers(HttpMethod.GET, "/api/notifications").hasRole("ADMIN")
+
+						// API theo user hiện chưa kiểm tra ownership,
+						// tạm thời chỉ ADMIN sử dụng
+						.pathMatchers(HttpMethod.GET, "/api/notifications/user/**").hasRole("ADMIN")
+
+						// Mark read hiện cũng chưa kiểm tra notification thuộc ai,
+						// tạm thời yêu cầu authenticated
+						.pathMatchers(HttpMethod.PUT, "/api/notifications/*/read").authenticated()
 
 						.anyExchange().authenticated())
 
