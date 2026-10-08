@@ -14,18 +14,22 @@ import com.graduation.topic.dto.TopicRequest;
 import com.graduation.topic.dto.TopicResponse;
 import com.graduation.topic.entity.Topic;
 import com.graduation.topic.repository.TopicRepository;
+import com.graduation.topic.repository.TopicRegistrationSlotRepository;
 
 @Service
 public class TopicService {
 
     private final TopicRepository repository;
     private final AuthClient authClient;
+    private final TopicRegistrationSlotRepository slots;
 
     public TopicService(
             TopicRepository repository,
-            AuthClient authClient) {
+            AuthClient authClient,
+            TopicRegistrationSlotRepository slots) {
         this.repository = repository;
         this.authClient = authClient;
+        this.slots = slots;
     }
 
     @Transactional(readOnly = true)
@@ -100,7 +104,7 @@ public class TopicService {
     public TopicResponse update(
             Long id, TopicRequest request, String token) {
 
-        Topic topic = repository.findById(id)
+        Topic topic = repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Không tìm thấy đề tài có ID: " + id));
@@ -160,17 +164,19 @@ public class TopicService {
 
     @Transactional
     public void delete(Long id) {
-        Topic topic = repository.findById(id)
+        Topic topic = repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Không tìm thấy đề tài có ID: " + id));
 
-        if (topic.getCurrentStudents() > 0) {
+        if (topic.getCurrentStudents() > 0
+                || slots.existsByTopicIdAndApprovedTrue(id)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Không thể xóa đề tài đã có sinh viên đăng ký");
         }
 
+        slots.deleteAllForTopic(id);
         repository.delete(topic);
         repository.flush();
     }

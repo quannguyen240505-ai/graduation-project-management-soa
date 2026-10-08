@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 
 import com.group.registration.entity.Registration;
 import com.group.registration.service.RegistrationService;
@@ -32,26 +35,29 @@ public class RegistrationController {
     }
 
     @GetMapping
-    public List<Registration> getAll() {
-        return service.getAll();
+    public List<Registration> getAll(@AuthenticationPrincipal Jwt jwt) {
+        return service.getAll(jwt);
     }
 
     @GetMapping("/{id}")
     public Registration getById(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
 
-        return service.getById(id);
+        return service.getById(id, jwt);
     }
 
     @PostMapping
     public ResponseEntity<Registration> create(
             @RequestBody Registration registration,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestHeader(HttpHeaders.AUTHORIZATION)
             String authorization) {
 
         Registration created =
                 service.create(
                         registration,
+                        jwt,
                         authorization);
 
         return ResponseEntity
@@ -62,18 +68,21 @@ public class RegistrationController {
     @PutMapping("/{id}/status")
     public Registration updateStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
 
         return service.updateStatus(
                 id,
-                body.get("status"));
+                body.get("status"),
+                authorization);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
 
-        service.delete(id);
+        service.delete(id, authorization);
 
         return ResponseEntity
                 .noContent()
