@@ -31,6 +31,10 @@ public class Registration {
     @Column(nullable = false, length = 30)
     private String status;
 
+    @Column(name = "capacity_version", nullable = false,
+            columnDefinition = "BIGINT DEFAULT 0")
+    private long capacityVersion = 0;
+
     private String note;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -101,6 +105,14 @@ public class Registration {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public long getCapacityVersion() {
+        return capacityVersion;
+    }
+
+    public void setCapacityVersion(long capacityVersion) {
+        this.capacityVersion = capacityVersion;
     }
 
     public String getNote() {

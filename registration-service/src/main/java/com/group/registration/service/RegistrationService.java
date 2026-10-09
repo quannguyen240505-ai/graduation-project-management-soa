@@ -1,6 +1,7 @@
 package com.group.registration.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
@@ -12,8 +13,10 @@ import com.group.registration.client.StudentClient;
 import com.group.registration.client.TopicClient;
 import com.group.registration.dto.StudentDTO;
 import com.group.registration.dto.TopicDTO;
+import com.group.registration.dto.TopicCapacityRequest;
 import com.group.registration.entity.Registration;
 import com.group.registration.repository.RegistrationRepository;
+import feign.FeignException;
 
 @Service
 public class RegistrationService {
@@ -124,6 +127,7 @@ public class RegistrationService {
 
         registration.setId(null);
         registration.setStatus("PENDING");
+        registration.setCapacityVersion(0);
 
         return repository.save(registration);
     }
@@ -131,7 +135,8 @@ public class RegistrationService {
     @Transactional
     public Registration updateStatus(
             Long id,
-            String status) {
+            String status,
+            String authorization) {
 
         if (status == null) {
             throw new ResponseStatusException(
@@ -140,7 +145,7 @@ public class RegistrationService {
         }
 
         String normalizedStatus =
-                status.trim().toUpperCase();
+                status.trim().toUpperCase(Locale.ROOT);
 
         if (!ALLOWED_STATUSES.contains(normalizedStatus)) {
             throw new ResponseStatusException(
@@ -149,15 +154,86 @@ public class RegistrationService {
                     + "PENDING, APPROVED hoặc REJECTED");
         }
 
-        Registration registration = getById(id);
-        registration.setStatus(normalizedStatus);
+        Registration registration = findForUpdate(id);
+        long version = registration.getCapacityVersion();
 
-        return repository.save(registration);
+        // Đăng ký APPROVED cũ (version=0) cũng có thể được đồng bộ bằng
+        // cách gửi lại APPROVED sau khi áp dụng bản sửa.
+        if (!normalizedStatus.equals(registration.getStatus())
+                || ("APPROVED".equals(normalizedStatus) && version == 0)) {
+            version = nextVersion(version);
+        }
+
+        synchronizeCapacity(registration, normalizedStatus, version, authorization);
+
+        registration.setStatus(normalizedStatus);
+        registration.setCapacityVersion(version);
+
+        return repository.saveAndFlush(registration);
     }
 
     @Transactional
-    public void delete(Long id) {
-        Registration registration = getById(id);
+    public void delete(Long id, String authorization) {
+        Registration registration = findForUpdate(id);
+        try {
+            synchronizeCapacity(registration, "REJECTED",
+                    nextVersion(registration.getCapacityVersion()), authorization);
+        } catch (ResponseStatusException ex) {
+            // Một đề tài chưa có chỗ được tính có thể đã bị xóa bằng CRUD cũ.
+            // Không bỏ qua lỗi khác hoặc lỗi 404 của đăng ký đang APPROVED.
+            if (ex.getStatusCode().value() != 404
+                    || "APPROVED".equals(registration.getStatus())) {
+                throw ex;
+            }
+        }
         repository.delete(registration);
+        repository.flush();
+    }
+
+    private Registration findForUpdate(Long id) {
+        return repository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Không tìm thấy đăng ký với id = " + id));
+    }
+
+    private long nextVersion(long version) {
+        if (version == Long.MAX_VALUE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "capacityVersion đã vượt giới hạn");
+        }
+        return version + 1;
+    }
+
+    private void synchronizeCapacity(
+            Registration registration, String status,
+            long version, String authorization) {
+
+        if (authorization == null || !authorization.startsWith("Bearer ")
+                || authorization.substring(7).isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Thiếu Bearer JWT");
+        }
+
+        try {
+            TopicDTO topic = topicClient.synchronizeCapacity(
+                    registration.getTopicId(), registration.getId(),
+                    new TopicCapacityRequest("APPROVED".equals(status), version),
+                    authorization);
+            if (topic == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_GATEWAY, "Topic Service trả về response rỗng");
+            }
+        } catch (FeignException ex) {
+            int code = ex.status();
+            if (code == 400 || code == 401 || code == 403 || code == 404 || code == 409) {
+                throw new ResponseStatusException(
+                        HttpStatus.valueOf(code),
+                        "Topic Service từ chối cập nhật số chỗ (HTTP " + code + ")", ex);
+            }
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Chưa đồng bộ được số chỗ. Hãy gửi lại cùng yêu cầu khi Topic hoạt động.",
+                    ex);
+        }
     }
 }
