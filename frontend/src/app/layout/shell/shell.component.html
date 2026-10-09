@@ -1,0 +1,63 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">G</div>
+
+      <div>
+        <strong> Graduation Project </strong>
+
+        <span> Management System </span>
+      </div>
+    </div>
+
+    <nav>
+      <a routerLink="/dashboard" routerLinkActive="active"> Tổng quan </a>
+
+      <a routerLink="/profile" routerLinkActive="active"> Tài khoản </a>
+
+      <a routerLink="/gateway-check" routerLinkActive="active">
+        Trạng thái hệ thống
+      </a>
+    </nav>
+
+    <div class="scope-card">
+      <small> Trạng thái tài khoản </small>
+
+      <strong> Đã xác thực </strong>
+
+      <span>
+        {{ session()?.role }}
+      </span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p>Hệ thống quản lý đồ án tốt nghiệp</p>
+
+        <h1>Bảng điều khiển</h1>
+      </div>
+
+      <div class="account">
+        <div class="account-text">
+          <strong> User #{{ session()?.userId }} </strong>
+
+          <span>
+            {{ session()?.role }}
+            ·
+            {{ session()?.status }}
+          </span>
+        </div>
+
+        <button class="ghost-btn" type="button" (click)="logout()">
+          Đăng xuất
+        </button>
+      </div>
+    </header>
+
+    <section class="content">
+      <router-outlet />
+    </section>
+  </main>
+</div>
