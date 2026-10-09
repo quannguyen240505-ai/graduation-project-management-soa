@@ -33,4 +33,9 @@ public interface StudentClient {
                 "Auth Service is temporarily unavailable. Please try again later.",
                 throwable);
     }
+    @GetMapping("/api/users/me")
+    StudentDTO getCurrentStudent(
+            @RequestHeader(HttpHeaders.AUTHORIZATION)
+            String authorization
+    );
 }
