@@ -27,3 +27,4 @@ eureka:
 
 jwt:
   issuer: graduation-project-auth
+  secret: ${JWT_SECRET}
