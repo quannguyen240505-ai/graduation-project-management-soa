@@ -34,14 +34,47 @@ public class GatewaySecurityConfig {
 	@Bean
 	SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
 			Converter<Jwt, Mono<AbstractAuthenticationToken>> c) {
+
 		return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-				.authorizeExchange(e -> e.pathMatchers("/api/auth/**", "/actuator/health").permitAll()
+
+				.authorizeExchange(e -> e
+
+						// Public
+						.pathMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+
+						.pathMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+
+						// Authenticated user APIs
+						.pathMatchers("/api/users/**").authenticated()
+
+						// API nội bộ để các service tra cứu User
+						.pathMatchers(HttpMethod.GET, "/api/auth/users/**").authenticated()
+
+						// Topic
+						// Counter chỉ được gọi giữa các service qua Eureka.
+						.pathMatchers("/api/topics/*/registrations/*/capacity").denyAll()
+
 						.pathMatchers(HttpMethod.GET, "/api/topics/**").hasAnyRole("STUDENT", "LECTURER", "ADMIN")
+
 						.pathMatchers(HttpMethod.POST, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
+
 						.pathMatchers(HttpMethod.PUT, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
-						.pathMatchers(HttpMethod.DELETE, "/api/topics/**").hasRole("ADMIN")
-						.pathMatchers("/api/registrations/**", "/api/notifications/**").authenticated().anyExchange()
-						.authenticated())
-				.oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(c))).build();
+
+						.pathMatchers(HttpMethod.DELETE, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
+
+						// Registration + Notification
+						.pathMatchers(HttpMethod.PUT, "/api/registrations/*/status")
+						.hasAnyRole("LECTURER", "ADMIN")
+
+						.pathMatchers(HttpMethod.DELETE, "/api/registrations/*")
+						.hasAnyRole("LECTURER", "ADMIN")
+
+						.pathMatchers("/api/registrations/**", "/api/notifications/**").authenticated()
+
+						.anyExchange().authenticated())
+
+				.oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(c)))
+
+				.build();
 	}
 }
