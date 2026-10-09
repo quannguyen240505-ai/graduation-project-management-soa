@@ -1,0 +1,108 @@
+<div class="login-page">
+  <header class="brand-bar">
+    <a
+      class="brand"
+      routerLink="/login"
+      aria-label="Graduation Project Management"
+    >
+      <span class="brand-mark">G</span>
+
+      <span class="brand-copy">
+        <strong>Graduation Project Management</strong>
+        <small>Hệ thống quản lý đồ án tốt nghiệp</small>
+      </span>
+    </a>
+  </header>
+
+  <main class="login-main">
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="card-heading">
+        <span class="welcome">Chào mừng trở lại</span>
+
+        <h1 id="login-title">Đăng nhập</h1>
+
+        <p>Sử dụng tài khoản của bạn để truy cập hệ thống.</p>
+      </div>
+
+      <!-- Đăng ký thành công -->
+      <div *ngIf="registered" class="alert alert-success">
+        Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.
+      </div>
+
+      <!-- Token hết hạn -->
+      <div *ngIf="expired" class="alert alert-warning">
+        Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.
+      </div>
+
+      <!-- Login lỗi -->
+      <div *ngIf="error()" class="alert alert-error">
+        {{ error() }}
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="userCode"> Mã người dùng </label>
+
+          <input
+            id="userCode"
+            formControlName="userCode"
+            placeholder="Nhập mã người dùng"
+            autocomplete="username"
+          />
+
+          <small
+            *ngIf="
+              form.controls.userCode.touched && form.controls.userCode.invalid
+            "
+          >
+            Vui lòng nhập mã người dùng.
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="password"> Mật khẩu </label>
+
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="Nhập mật khẩu"
+            autocomplete="current-password"
+          />
+
+          <small
+            *ngIf="
+              form.controls.password.touched && form.controls.password.invalid
+            "
+          >
+            Vui lòng nhập mật khẩu hợp lệ.
+          </small>
+        </div>
+
+        <button class="submit-btn" type="submit" [disabled]="loading()">
+          <span *ngIf="!loading()"> Đăng nhập </span>
+
+          <span *ngIf="loading()" class="loading-label">
+            <span class="spinner"></span>
+            Đang đăng nhập...
+          </span>
+        </button>
+      </form>
+
+      <!-- Link đăng ký -->
+      <div class="register-link">
+        <span>Chưa có tài khoản?</span>
+
+        <a routerLink="/register"> Đăng ký ngay </a>
+      </div>
+
+      <div class="security-note">
+        <span class="shield">✓</span>
+
+        <span> Phiên đăng nhập được xác thực an toàn bằng JWT. </span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="page-footer">Graduation Project Management System</footer>
+</div>

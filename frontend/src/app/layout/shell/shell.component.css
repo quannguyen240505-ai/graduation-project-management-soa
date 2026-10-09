@@ -1,0 +1,139 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  background: #f5f7fb;
+}
+.sidebar {
+  background: #0f1b33;
+  color: white;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-mark {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #4f7cff;
+  font-weight: 800;
+}
+.brand strong,
+.brand span {
+  display: block;
+}
+.brand span {
+  color: #a9b4c9;
+  margin-top: 3px;
+  font-size: 12px;
+}
+nav {
+  display: grid;
+  gap: 8px;
+}
+nav a {
+  color: #cbd4e5;
+  text-decoration: none;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+nav a:hover,
+nav a.active {
+  color: white;
+  background: #1c2b4a;
+}
+.scope-card {
+  margin-top: auto;
+  padding: 16px;
+  border: 1px solid #2d3f63;
+  border-radius: 14px;
+  display: grid;
+  gap: 7px;
+  background: #14223e;
+}
+.scope-card small {
+  color: #8fa1bf;
+  margin-bottom: 4px;
+}
+.scope-card strong {
+  font-size: 13px;
+}
+.main {
+  min-width: 0;
+}
+.topbar {
+  min-height: 86px;
+  background: white;
+  border-bottom: 1px solid #e4e9f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 30px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+.topbar h1 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+.account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.account-text {
+  text-align: right;
+}
+.account-text strong,
+.account-text span {
+  display: block;
+}
+.account-text span {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+.ghost-btn {
+  border: 1px solid #d8deea;
+  background: white;
+  border-radius: 9px;
+  padding: 9px 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.content {
+  padding: 30px;
+}
+@media (max-width: 800px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+  .topbar {
+    padding: 14px 18px;
+  }
+  .content {
+    padding: 18px;
+  }
+}

@@ -1,0 +1,141 @@
+<div class="profile-page">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Tài khoản</p>
+
+      <h2>Hồ sơ cá nhân</h2>
+
+      <p>Xem thông tin tài khoản và thông tin cá nhân của bạn.</p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadProfile()"
+      [disabled]="loading()"
+    >
+      {{ loading() ? "Đang tải..." : "Làm mới" }}
+    </button>
+  </div>
+
+  <div *ngIf="error()" class="alert-error">
+    {{ error() }}
+  </div>
+
+  <div *ngIf="loading() && !user()" class="loading-card">
+    Đang tải thông tin tài khoản...
+  </div>
+
+  <ng-container *ngIf="user() as profile">
+    <section class="profile-card">
+      <div class="profile-header">
+        <div class="avatar">
+          {{ getInitials(profile.fullName) }}
+        </div>
+
+        <div class="identity">
+          <h3>
+            {{ profile.fullName }}
+          </h3>
+
+          <p>
+            {{ profile.userCode }}
+          </p>
+
+          <div class="badges">
+            <span class="role-badge">
+              {{ roleLabel(profile.role) }}
+            </span>
+
+            <span
+              class="status-badge"
+              [class.active]="profile.status === 'ACTIVE'"
+            >
+              {{ profile.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Thông tin cá nhân</div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label"> Mã người dùng </span>
+
+          <strong>
+            {{ profile.userCode }}
+          </strong>
+        </div>
+
+        <div class="info-item">
+          <span class="label"> Họ và tên </span>
+
+          <strong>
+            {{ profile.fullName }}
+          </strong>
+        </div>
+
+        <div class="info-item">
+          <span class="label"> Email </span>
+
+          <strong>
+            {{ profile.email }}
+          </strong>
+        </div>
+
+        <div class="info-item">
+          <span class="label"> Số điện thoại </span>
+
+          <strong>
+            {{ profile.phone || "Chưa cập nhật" }}
+          </strong>
+        </div>
+
+        <div class="info-item">
+          <span class="label"> Lớp </span>
+
+          <strong>
+            {{ profile.className || "Chưa cập nhật" }}
+          </strong>
+        </div>
+
+        <div class="info-item">
+          <span class="label"> Khoa / Bộ môn </span>
+
+          <strong>
+            {{ profile.department || "Chưa cập nhật" }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Thông tin tài khoản</div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label"> Vai trò </span>
+
+          <strong>
+            {{ roleLabel(profile.role) }}
+          </strong>
+        </div>
+
+        <div class="info-item">
+          <span class="label"> Trạng thái </span>
+
+          <strong class="active-text" *ngIf="profile.status === 'ACTIVE'">
+            Đang hoạt động
+          </strong>
+
+          <strong *ngIf="profile.status !== 'ACTIVE'">
+            {{ profile.status }}
+          </strong>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>
