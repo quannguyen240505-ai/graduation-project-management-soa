@@ -101,7 +101,16 @@ CREATE TABLE IF NOT EXISTS `detai` (
 
     PRIMARY KEY (`id`),
 
-    UNIQUE KEY `uk_detai_topic_code` (`topic_code`)
+    UNIQUE KEY `uk_detai_topic_code` (`topic_code`),
+
+    CONSTRAINT `chk_detai_max_students`
+        CHECK (`max_students` > 0),
+
+    CONSTRAINT `chk_detai_current_students`
+        CHECK (
+            `current_students` >= 0
+            AND `current_students` <= `max_students`
+        )
 )
 ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
@@ -109,7 +118,41 @@ COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
--- 3. DANGKY
+-- 3. TOPIC REGISTRATION SLOTS
+-- Owner: Topic Service
+--
+-- Lưu trạng thái số chỗ đã được tính cho từng registration.
+-- registration_id chỉ là ID nhận từ Registration Service.
+-- Không tạo FK sang bảng dangky vì hai bảng thuộc hai service khác nhau.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS `topic_registration_slots` (
+    `registration_id` BIGINT NOT NULL,
+
+    `topic_id` BIGINT NOT NULL,
+
+    `approved` BIT(1) NOT NULL,
+
+    `capacity_version` BIGINT NOT NULL,
+
+    `updated_at` DATETIME NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`registration_id`),
+
+    INDEX `idx_topic_slots_topic_id` (`topic_id`),
+
+    CONSTRAINT `fk_topic_slots_topic`
+        FOREIGN KEY (`topic_id`)
+        REFERENCES `detai` (`id`)
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================================
+-- 4. DANGKY
 -- Owner: Registration Service
 -- ============================================================
 
@@ -140,7 +183,7 @@ COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
--- 4. NOTIFICATIONS
+-- 5. NOTIFICATIONS
 -- Owner: Notification Service
 -- ============================================================
 
