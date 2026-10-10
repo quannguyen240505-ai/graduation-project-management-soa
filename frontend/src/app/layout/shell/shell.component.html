@@ -13,6 +13,8 @@
     <nav>
       <a routerLink="/dashboard" routerLinkActive="active"> Tổng quan </a>
 
+      <a routerLink="/topics" routerLinkActive="active"> Đề tài </a>
+
       <a routerLink="/profile" routerLinkActive="active"> Tài khoản </a>
 
       <a routerLink="/gateway-check" routerLinkActive="active">
@@ -55,6 +57,13 @@
         </button>
       </div>
     </header>
+
+    <nav class="mobile-nav" aria-label="Điều hướng">
+      <a routerLink="/dashboard" routerLinkActive="active">Tổng quan</a>
+      <a routerLink="/topics" routerLinkActive="active">Đề tài</a>
+      <a routerLink="/profile" routerLinkActive="active">Tài khoản</a>
+      <a routerLink="/gateway-check" routerLinkActive="active">Trạng thái</a>
+    </nav>
 
     <section class="content">
       <router-outlet />

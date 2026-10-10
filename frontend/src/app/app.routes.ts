@@ -1,5 +1,6 @@
 import { Routes } from "@angular/router";
 import { authGuard, guestGuard } from "./core/guards/auth.guard";
+import { topicManagerGuard } from "./core/guards/topic-manager.guard";
 import { ShellComponent } from "./layout/shell/shell.component";
 
 export const routes: Routes = [
@@ -29,6 +30,26 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [authGuard],
     children: [
+      {
+        path: "topics",
+        canActivate: [authGuard],
+        loadComponent: () => import("./features/topics/topic-list.component").then(m => m.TopicListComponent),
+      },
+      {
+        path: "topics/new",
+        canActivate: [authGuard, topicManagerGuard],
+        loadComponent: () => import("./features/topics/topic-form.component").then(m => m.TopicFormComponent),
+      },
+      {
+        path: "topics/:id/edit",
+        canActivate: [authGuard, topicManagerGuard],
+        loadComponent: () => import("./features/topics/topic-form.component").then(m => m.TopicFormComponent),
+      },
+      {
+        path: "topics/:id",
+        canActivate: [authGuard],
+        loadComponent: () => import("./features/topics/topic-detail.component").then(m => m.TopicDetailComponent),
+      },
       {
         path: "dashboard",
         loadComponent: () =>
