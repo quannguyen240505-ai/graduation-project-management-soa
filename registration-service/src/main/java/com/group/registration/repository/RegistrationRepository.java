@@ -2,23 +2,25 @@ package com.group.registration.repository;
 
 import com.group.registration.entity.Registration;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
-import java.util.List;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface RegistrationRepository
-        extends JpaRepository<Registration, Long> {
+import jakarta.persistence.LockModeType;
+import java.util.List;
+import java.util.Optional;
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select r from Registration r where r.id = :id")
-    Optional<Registration> findByIdForUpdate(@Param("id") Long id);
+public interface RegistrationRepository extends JpaRepository<Registration, Long> {
+
+    boolean existsByStudentIdAndTopicId(Long studentId, Long topicId);
 
     List<Registration> findByStudentId(Long studentId);
 
-    boolean existsByStudentIdAndTopicId(
-            Long studentId,
-            Long topicId);
+    // Method mới: tìm các đăng ký PENDING khác của cùng sinh viên
+    List<Registration> findByStudentIdAndStatusAndIdNot(
+            Long studentId, String status, Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Registration r WHERE r.id = :id")
+    Optional<Registration> findByIdForUpdate(@Param("id") Long id);
 }

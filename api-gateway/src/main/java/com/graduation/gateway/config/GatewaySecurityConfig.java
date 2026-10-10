@@ -75,6 +75,131 @@ public class GatewaySecurityConfig {
 
 				.oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(c)))
 
+<<<<<<< Updated upstream
 				.build();
 	}
 }
+=======
+                        /*
+                         * API capacity chỉ dùng cho giao tiếp
+                         * giữa các service qua Eureka.
+                         * Client bên ngoài không được gọi
+                         * thông qua Gateway.
+                         */
+                        .pathMatchers(
+                                "/api/topics/*/registrations/*/capacity")
+                        .denyAll()
+
+                        .pathMatchers(
+                                HttpMethod.GET,
+                                "/api/topics/**")
+                        .hasAnyRole(
+                                "STUDENT",
+                                "LECTURER",
+                                "ADMIN")
+
+                        .pathMatchers(
+                                HttpMethod.POST,
+                                "/api/topics/**")
+                        .hasAnyRole(
+                                "LECTURER",
+                                "ADMIN")
+
+                        .pathMatchers(
+                                HttpMethod.PUT,
+                                "/api/topics/**")
+                        .hasAnyRole(
+                                "LECTURER",
+                                "ADMIN")
+
+                        .pathMatchers(
+                                HttpMethod.DELETE,
+                                "/api/topics/**")
+                        .hasAnyRole(
+                                "LECTURER",
+                                "ADMIN")
+
+                        // =========================
+                        // Registration
+                        // =========================
+
+                        // Sinh viên được tạo đăng ký đề tài
+                        .pathMatchers(
+                                HttpMethod.POST,
+                                "/api/registrations")
+                        .hasRole("STUDENT")
+
+                        /*
+                         * API hiện trả dữ liệu đăng ký chung,
+                         * chưa kiểm tra ownership của sinh viên.
+                         * Vì vậy tạm thời chỉ Lecturer/Admin xem.
+                         */
+                        .pathMatchers(
+                                HttpMethod.GET,
+                                "/api/registrations/**")
+                        .hasAnyRole(
+                                "LECTURER",
+                                "ADMIN",
+                                "STUDENT")
+
+                        // Lecturer/Admin duyệt hoặc từ chối
+                        .pathMatchers(
+                                HttpMethod.PUT,
+                                "/api/registrations/*/status")
+                        .hasAnyRole(
+                                "LECTURER",
+                                "ADMIN")
+
+                        // Lecturer/Admin được xóa đăng ký
+                        .pathMatchers(
+                                HttpMethod.DELETE,
+                                "/api/registrations/**")
+                        .hasAnyRole(
+                                "LECTURER",
+                                "ADMIN")
+
+                        // =========================
+                        // Notification
+                        // =========================
+
+                        /*
+                         * API lấy toàn bộ notification.
+                         * Chỉ ADMIN được phép sử dụng.
+                         */
+                        .pathMatchers(
+                                HttpMethod.GET,
+                                "/api/notifications")
+                        .hasRole("ADMIN")
+
+                        /*
+                         * API theo user hiện chưa kiểm tra
+                         * user đang đăng nhập có đúng là
+                         * chủ sở hữu notification hay không.
+                         */
+                        .pathMatchers(
+                                HttpMethod.GET,
+                                "/api/notifications/user/**")
+                        .hasRole("ADMIN")
+
+                        /*
+                         * Mark-read hiện chưa kiểm tra ownership.
+                         * Tạm thời yêu cầu đã đăng nhập.
+                         */
+                        .pathMatchers(
+                                HttpMethod.PUT,
+                                "/api/notifications/*/read")
+                        .authenticated()
+
+                        // Các request khác bắt buộc đăng nhập
+                        .anyExchange()
+                        .authenticated())
+
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(
+                                jwt -> jwt.jwtAuthenticationConverter(
+                                        jwtAuthenticationConverter)))
+
+                .build();
+    }
+}
+>>>>>>> Stashed changes
