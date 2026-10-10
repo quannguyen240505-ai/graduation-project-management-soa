@@ -1,0 +1,318 @@
+<div class="registration-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">QUẢN LÝ ĐỒ ÁN TỐT NGHIỆP</span>
+      <h2>{{ isStudent() ? 'Đăng ký đề tài' : 'Quản lý đăng ký' }}</h2>
+      <p>
+        {{ isStudent()
+        ? 'Khám phá đề tài, gửi yêu cầu đăng ký và theo dõi trạng thái xét duyệt.'
+        : 'Theo dõi yêu cầu đăng ký của sinh viên và xử lý các hồ sơ chờ duyệt.' }}
+      </p>
+    </div>
+    <button type="button" class="refresh-btn" (click)="reload()"
+      [disabled]="loadingTopics() || loadingRegistrations() || actionLoading()">
+      ↻ &nbsp; Làm mới dữ liệu
+    </button>
+  </div>
+
+  @if (!isStudent() && !isManager()) {
+  <section class="message error" role="alert">
+    Tài khoản của bạn không có quyền truy cập chức năng đăng ký đề tài.
+  </section>
+  } @else {
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon blue">▤</div>
+      <div>
+        <span>Đề tài đang mở</span>
+        <strong>{{ openTopicCount() }}</strong>
+        <small>Đủ điều kiện nhận đăng ký</small>
+      </div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-icon purple">◷</div>
+      <div>
+        <span>{{ isStudent() ? 'Đăng ký của tôi' : 'Đang chờ duyệt' }}</span>
+        <strong>{{ isStudent() ? myRegistrations().length : pendingCount() }}</strong>
+        <small>{{ isStudent() ? 'Tổng hồ sơ đã gửi' : 'Hồ sơ cần xử lý' }}</small>
+      </div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-icon green">✓</div>
+      <div>
+        <span>{{ isStudent() ? 'Đã được duyệt' : 'Hồ sơ đã duyệt' }}</span>
+        <strong>{{ isStudent() ? myApprovedCount() : approvedCount() }}</strong>
+        <small>Đăng ký được chấp thuận</small>
+      </div>
+    </article>
+  </div>
+
+  @if (notice()) {
+  <div class="message success" role="status">
+    <span>{{ notice() }}</span>
+    <button type="button" aria-label="Đóng thông báo" (click)="dismissMessage()">×</button>
+  </div>
+  }
+  @if (actionError()) {
+  <div class="message error" role="alert">
+    <span>{{ actionError() }}</span>
+    <button type="button" aria-label="Đóng lỗi" (click)="dismissMessage()">×</button>
+  </div>
+  }
+
+  <section class="main-card">
+    <div class="tabs" role="tablist" aria-label="Nội dung đăng ký">
+      <button type="button" role="tab" [attr.aria-selected]="activeTab() === 'topics'"
+        [class.selected]="activeTab() === 'topics'" (click)="selectTab('topics')">
+        Danh sách đề tài
+        <span>{{ topics().length }}</span>
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="activeTab() === 'registrations'"
+        [class.selected]="activeTab() === 'registrations'" (click)="selectTab('registrations')">
+        {{ isStudent() ? 'Đăng ký của tôi' : 'Duyệt đăng ký' }}
+        <span>{{ isStudent() ? myRegistrations().length : registrations().length }}</span>
+      </button>
+    </div>
+
+    @if (activeTab() === 'topics') {
+    <div class="panel-header">
+      <div>
+        <h3>Danh sách đề tài</h3>
+        <p>Chọn đề tài phù hợp với định hướng của bạn.</p>
+      </div>
+      <span class="result-count">{{ visibleTopics().length }} kết quả</span>
+    </div>
+    <div class="filters">
+      <label class="search-wrap">
+        <span class="sr-only">Tìm kiếm đề tài</span>
+        <span class="search-icon">⌕</span>
+        <input type="search" placeholder="Tìm theo tên, mã hoặc mô tả đề tài..." [ngModel]="search()"
+          (ngModelChange)="search.set($event)" />
+      </label>
+      <label class="select-wrap">
+        <span class="sr-only">Lọc lĩnh vực</span>
+        <select [ngModel]="fieldFilter()" (ngModelChange)="fieldFilter.set($event)">
+          <option value="ALL">Tất cả lĩnh vực</option>
+          @for (field of fields(); track field) { <option [value]="field">{{ field }}</option> }
+        </select>
+      </label>
+      <label class="select-wrap">
+        <span class="sr-only">Lọc trạng thái đề tài</span>
+        <select [ngModel]="topicFilter()" (ngModelChange)="topicFilter.set($event)">
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="AVAILABLE">Còn nhận đăng ký</option>
+          <option value="UNAVAILABLE">Đã đóng / Hết chỗ</option>
+        </select>
+      </label>
+    </div>
+
+    @if (topicsError()) {
+    <div class="state-box error-state" role="alert">
+      <strong>Không tải được đề tài</strong>
+      <p>{{ topicsError() }}</p>
+      <button type="button" class="small-btn" (click)="loadTopics()">Thử lại</button>
+    </div>
+    } @else if (loadingTopics()) {
+    <div class="state-box"><span class="spinner"></span>
+      <p>Đang tải danh sách đề tài...</p>
+    </div>
+    } @else if (visibleTopics().length === 0) {
+    <div class="state-box"><span class="empty-illustration">⌕</span>
+      <strong>Không tìm thấy đề tài phù hợp</strong>
+      <p>Thử thay đổi từ khóa hoặc bộ lọc của bạn.</p>
+    </div>
+    } @else {
+    <div class="topic-grid">
+      @for (topic of visibleTopics(); track topic.id) {
+      <article class="topic-card">
+        <div class="topic-card-top">
+          <span class="topic-code">{{ topic.topicCode }}</span>
+          <span class="topic-status" [class.closed]="!isAvailable(topic)">
+            <span class="dot"></span>
+            {{ isAvailable(topic) ? 'Đang mở' : (topic.status === 'OPEN' ? 'Đã đủ chỗ' : 'Đã đóng') }}
+          </span>
+        </div>
+        <h4 [title]="topic.topicName">{{ topic.topicName }}</h4>
+        <p class="topic-description">{{ topic.description || 'Chưa có mô tả chi tiết cho đề tài này.' }}</p>
+        <div class="topic-meta">
+          <span>⌘ &nbsp; {{ topic.field || 'Chưa phân loại' }}</span>
+          <span>GV #{{ topic.lecturerId }}</span>
+        </div>
+        <div class="capacity-row">
+          <span>Số lượng sinh viên</span>
+          <strong>{{ topic.currentStudents }}/{{ topic.maxStudents }}</strong>
+        </div>
+        <div class="progress-track">
+          <span [style.width.%]="occupancyPercent(topic)" [class.full]="!isAvailable(topic)"></span>
+        </div>
+        <div class="topic-footer">
+          <span class="muted">Mã #{{ topic.id }}</span>
+          @if (isStudent()) {
+          @if (wasRegistered(topic.id)) {
+          <button type="button" class="secondary-btn" disabled>Đã đăng ký</button>
+          } @else {
+          <button type="button" class="primary-btn" [disabled]="!isAvailable(topic)" (click)="openCreate(topic)">
+            {{ isAvailable(topic) ? 'Đăng ký ngay →' : 'Không khả dụng' }}
+          </button>
+          }
+          } @else {
+          <span class="muted">{{ topic.status }}</span>
+          }
+        </div>
+      </article>
+      }
+    </div>
+    }
+    } @else {
+    <div class="panel-header">
+      <div>
+        <h3>{{ isStudent() ? 'Lịch sử đăng ký' : 'Danh sách yêu cầu đăng ký' }}</h3>
+        <p>{{ isStudent() ? 'Theo dõi hồ sơ đã gửi và quyết định xét duyệt.' : 'Xét duyệt yêu cầu đăng ký của sinh
+          viên.' }}</p>
+      </div>
+      <span class="result-count">{{ visibleRegistrations().length }} hồ sơ</span>
+    </div>
+    <div class="filters">
+      <label class="search-wrap">
+        <span class="sr-only">Tìm kiếm đăng ký</span>
+        <span class="search-icon">⌕</span>
+        <input type="search" placeholder="Tìm theo mã hồ sơ, đề tài hoặc sinh viên..." [ngModel]="registrationSearch()"
+          (ngModelChange)="registrationSearch.set($event)" />
+      </label>
+      <label class="select-wrap">
+        <span class="sr-only">Lọc trạng thái đăng ký</span>
+        <select [ngModel]="registrationFilter()" (ngModelChange)="registrationFilter.set($event)">
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="PENDING">Chờ duyệt</option>
+          <option value="APPROVED">Đã duyệt</option>
+          <option value="REJECTED">Từ chối</option>
+        </select>
+      </label>
+    </div>
+
+    @if (registrationsError()) {
+    <div class="state-box error-state" role="alert">
+      <strong>Không tải được đăng ký</strong>
+      <p>{{ registrationsError() }}</p>
+      <button type="button" class="small-btn" (click)="loadRegistrations()">Thử lại</button>
+    </div>
+    } @else if (loadingRegistrations()) {
+    <div class="state-box"><span class="spinner"></span>
+      <p>Đang tải các hồ sơ đăng ký...</p>
+    </div>
+    } @else if (visibleRegistrations().length === 0) {
+    <div class="state-box"><span class="empty-illustration">▤</span>
+      <strong>Chưa có hồ sơ đăng ký</strong>
+      <p>{{ isStudent() ? 'Chọn một đề tài để gửi đăng ký đầu tiên.' : 'Không có hồ sơ phù hợp với bộ lọc hiện tại.' }}
+      </p>
+      @if (isStudent()) {
+      <button type="button" class="primary-btn" (click)="selectTab('topics')">Xem đề tài</button>
+      }
+    </div>
+    } @else {
+    <div class="table-scroller">
+      <table class="registration-table">
+        <thead>
+          <tr>
+            <th>Mã hồ sơ</th>
+            <th>Đề tài</th>
+            @if (isManager()) { <th>Sinh viên</th> }
+            <th>Ngày đăng ký</th>
+            <th>Trạng thái</th>
+            @if (isManager()) { <th class="align-right">Thao tác</th> }
+          </tr>
+        </thead>
+        <tbody>
+          @for (registration of visibleRegistrations(); track registration.id) {
+          <tr>
+            <td><strong>#{{ registration.id }}</strong></td>
+            <td class="topic-cell">
+              <strong>{{ topicTitle(registration.topicId) }}</strong>
+              <small>{{ topicById(registration.topicId)?.topicCode || ('Đề tài #' + registration.topicId) }}</small>
+              @if (registration.note) { <small class="note-preview" [title]="registration.note">{{ registration.note
+                }}</small> }
+            </td>
+            @if (isManager()) { <td>SV #{{ registration.studentId }}</td> }
+            <td>{{ registration.registrationDate || registration.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td><span class="status-badge" [ngClass]="statusClass(registration.status)">
+                {{ statusLabel(registration.status) }}
+              </span></td>
+            @if (isManager()) {
+            <td class="align-right actions">
+              @if (registration.status === 'PENDING') {
+              <button class="mini-btn accept" type="button" [disabled]="actionLoading()"
+                (click)="requestManage('approve', registration)">Duyệt</button>
+              <button class="mini-btn decline" type="button" [disabled]="actionLoading()"
+                (click)="requestManage('reject', registration)">Từ chối</button>
+              }
+              <button class="mini-btn remove" type="button" [disabled]="actionLoading()"
+                (click)="requestManage('delete', registration)">Xóa</button>
+            </td>
+            }
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+    }
+  </section>
+
+  @if (selectedTopic(); as topic) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="register-dialog-heading"
+      (keydown.escape)="closeCreate()">
+      <div class="modal-head">
+        <div><span class="eyebrow">ĐĂNG KÝ ĐỀ TÀI</span>
+          <h3 id="register-dialog-heading">Xác nhận thông tin</h3>
+        </div>
+        <button type="button" aria-label="Đóng" class="icon-btn" (click)="closeCreate()"
+          [disabled]="actionLoading()">×</button>
+      </div>
+      <div class="modal-content">
+        <p class="modal-intro">Kiểm tra đề tài trước khi gửi yêu cầu.</p>
+        <div class="summary-box">
+          <span>{{ topic.topicCode }}</span>
+          <strong>{{ topic.topicName }}</strong>
+          <small>{{ topic.field || 'Chưa phân loại' }} · GV #{{ topic.lecturerId }}</small>
+        </div>
+        <label class="form-field">
+          <span>Sinh viên đăng ký</span>
+          <input type="text" [value]="'Tài khoản hiện tại · User #' + session()?.userId" readonly />
+          <small>Danh tính lấy từ phiên đăng nhập và được backend kiểm tra bằng JWT.</small>
+        </label>
+        <label class="form-field">
+          <span>Ghi chú <em>(không bắt buộc)</em></span>
+          <textarea [(ngModel)]="note" name="note" maxlength="500" rows="4"
+            placeholder="Viết ngắn gọn mong muốn hoặc thông tin bổ sung..."></textarea>
+          <small class="char-count">{{ note.length }}/500</small>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeCreate()" [disabled]="actionLoading()">Hủy</button>
+        <button type="button" class="primary-btn" (click)="requestCreate()" [disabled]="actionLoading()">Tiếp tục đăng
+          ký →</button>
+      </div>
+    </section>
+  </div>
+  }
+
+  @if (pendingAction()) {
+  <div class="modal-backdrop confirmation-layer" role="presentation">
+    <section class="modal-card confirm-card" role="alertdialog" aria-modal="true"
+      aria-labelledby="confirm-dialog-heading" aria-describedby="confirm-dialog-description">
+      <div class="confirm-symbol">?</div>
+      <h3 id="confirm-dialog-heading">{{ actionTitle() }}</h3>
+      <p id="confirm-dialog-description">{{ actionDescription() }}</p>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeConfirm()" [disabled]="actionLoading()">Quay
+          lại</button>
+        <button type="button" class="primary-btn" (click)="confirmAction()" [disabled]="actionLoading()">
+          {{ actionLoading() ? 'Đang xử lý...' : 'Xác nhận' }}
+        </button>
+      </div>
+    </section>
+  </div>
+  }
+  }
+</div>
