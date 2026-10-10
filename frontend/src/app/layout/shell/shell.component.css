@@ -123,6 +123,7 @@ nav a.active {
 .content {
   padding: 30px;
 }
+.mobile-nav { display: none; }
 @media (max-width: 800px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -136,4 +137,13 @@ nav a.active {
   .content {
     padding: 18px;
   }
+  .mobile-nav { display: flex; gap: 5px; padding: 10px 12px; background: #0f1b33; overflow-x: auto; }
+  .mobile-nav a { white-space: nowrap; padding: 9px 12px; font-size: 12px; }
+}
+@media (max-width: 600px) {
+  .account-text { display: none; }
+  .topbar { gap: 14px; }
+  .topbar h1 { font-size: 18px; }
+  .topbar p { font-size: 11px; }
+  .ghost-btn { white-space: nowrap; }
 }

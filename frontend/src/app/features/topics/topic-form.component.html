@@ -1,0 +1,55 @@
+<div class="topic-page form-page">
+  <a routerLink="/topics" class="breadcrumb">← Danh sách đề tài</a>
+  <div class="page-heading"><div><p class="eyebrow">QUẢN LÝ ĐỀ TÀI</p><h2>{{ editing() ? "Sửa đề tài" : "Tạo đề tài mới" }}</h2>
+    <p class="muted">Nhập thông tin đề tài và giảng viên phụ trách. Các trường có dấu * là bắt buộc.</p></div></div>
+  @if (loading()) {
+    <div class="state panel" role="status"><span class="spinner" aria-hidden="true"></span><h3>Đang tải đề tài…</h3></div>
+  } @else if (loadError()) {
+    <div class="state panel" role="alert"><h3>Chưa mở được đề tài</h3><p>{{ loadError() }}</p>
+      <button type="button" class="button secondary" (click)="reload()">Thử lại</button></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="panel topic-form" [attr.aria-busy]="saving()">
+      @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
+      <fieldset [disabled]="saving()"><legend>Thông tin đề tài</legend>
+        <div class="form-grid">
+          <div class="field"><label for="topic-code">Mã đề tài <span>*</span></label>
+            <input id="topic-code" formControlName="topicCode" maxlength="50" placeholder="Ví dụ: DT003"
+              [attr.aria-invalid]="invalid('topicCode')" aria-describedby="code-hint" />
+            <p id="code-hint" class="hint" [class.field-error]="invalid('topicCode')">
+              {{ invalid('topicCode') ? "Nhập mã đề tài, tối đa 50 ký tự, không chỉ gồm dấu cách." : "Mã riêng của đề tài, không trùng với đề tài đã có." }}</p></div>
+          <div class="field"><label for="topic-field-input">Lĩnh vực</label>
+            <input id="topic-field-input" formControlName="field" maxlength="100" placeholder="Ví dụ: Công nghệ thông tin"
+              [attr.aria-invalid]="invalid('field')" aria-describedby="field-hint" />
+            <p id="field-hint" class="hint">Tối đa 100 ký tự.</p></div>
+          <div class="field full-width"><label for="topic-name">Tên đề tài <span>*</span></label>
+            <input id="topic-name" formControlName="topicName" maxlength="255" placeholder="Nhập tên đề tài tốt nghiệp"
+              [attr.aria-invalid]="invalid('topicName')" aria-describedby="name-hint" />
+            @if (invalid('topicName')) { <p id="name-hint" class="hint field-error">Nhập tên đề tài, tối đa 255 ký tự, không chỉ gồm dấu cách.</p> }</div>
+          <div class="field full-width"><label for="topic-description">Mô tả</label>
+            <textarea id="topic-description" formControlName="description" rows="6" placeholder="Mục tiêu, phạm vi và nội dung đề tài…"></textarea></div>
+        </div>
+      </fieldset>
+      <fieldset [disabled]="saving()"><legend>Giảng viên và số lượng sinh viên</legend>
+        <div class="form-grid">
+          <div class="field"><label for="topic-lecturer">Mã số tài khoản giảng viên <span>*</span></label>
+            <input id="topic-lecturer" type="number" formControlName="lecturerId" min="1" step="1" placeholder="Nhập số ID tài khoản"
+              [attr.aria-invalid]="invalid('lecturerId')" aria-describedby="lecturer-hint" />
+            <p id="lecturer-hint" class="hint" [class.field-error]="invalid('lecturerId')">
+              {{ invalid('lecturerId') ? "Mã số phải là số nguyên lớn hơn 0." : "Dùng số tài khoản hiển thị ở Tổng quan của giảng viên. Tài khoản phải đang hoạt động." }}</p></div>
+          <div class="field"><label for="topic-max-students">Số sinh viên tối đa <span>*</span></label>
+            <input id="topic-max-students" type="number" formControlName="maxStudents"
+              [min]="existing() ? (existing()!.currentStudents || 1) : 1" max="2147483647" step="1"
+              [attr.aria-invalid]="invalid('maxStudents')" aria-describedby="capacity-hint" />
+            <p id="capacity-hint" class="hint" [class.field-error]="invalid('maxStudents')">
+              {{ invalid('maxStudents') ? "Nhập số lượng hợp lệ: số nguyên dương, không thấp hơn số sinh viên đã duyệt." : "Số lượng sinh viên mà đề tài có thể nhận." }}</p></div>
+        </div>
+        @if (existing(); as topic) {
+          <div class="capacity-info"><strong>{{ topic.currentStudents }} sinh viên đã được duyệt</strong>
+            <p>Số lượng này được cập nhật theo trạng thái đăng ký. Số sinh viên tối đa phải từ {{ topic.currentStudents || 1 }} trở lên.</p></div>
+        }
+      </fieldset>
+      <div class="form-actions"><button type="button" class="button secondary" [disabled]="saving()" (click)="cancel()">Hủy</button>
+        <button type="submit" class="button primary" [disabled]="saving()">{{ saving() ? "Đang lưu…" : editing() ? "Lưu thay đổi" : "Tạo đề tài" }}</button></div>
+    </form>
+  }
+</div>

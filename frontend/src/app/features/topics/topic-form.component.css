@@ -1,0 +1,18 @@
+.form-page { max-width: 920px; }.topic-form { padding: 30px; }
+fieldset { border: 0; padding: 0; margin: 0 0 32px; min-width: 0; }
+legend { padding: 0; margin-bottom: 22px; font-size: 16px; font-weight: 700; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.full-width { grid-column: 1 / -1; }.field { min-width: 0; }
+label { display: block; font-size: 13px; font-weight: 650; margin-bottom: 9px; color: #31415d; }
+label span { color: #b42318; margin-left: 3px; }
+input, textarea { width: 100%; min-width: 0; border: 1px solid #d9e1ee; padding: 12px 13px;
+  border-radius: 9px; background: white; color: #263652; font: inherit; font-size: 14px; line-height: 1.6; }
+textarea { resize: vertical; min-height: 130px; }
+input[aria-invalid=true] { border-color: #cd645a; }
+.hint { margin: 8px 0 0; color: #78849a; font-size: 12px; line-height: 1.7; }
+.field-error { color: #b42318; }
+.capacity-info { margin-top: 22px; padding: 17px 20px; background: #f3f6ff; border-radius: 10px; }
+.capacity-info strong { font-size: 13px; color: #3d57a0; }
+.capacity-info p { margin: 7px 0 0; font-size: 12px; line-height: 1.7; color: #69758b; }
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #edf1f7; padding-top: 24px; }
+@media (max-width: 600px) { .topic-form { padding: 22px; }.form-grid { grid-template-columns: 1fr; }.form-actions { flex-wrap: wrap; } }

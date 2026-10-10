@@ -1,0 +1,36 @@
+<div class="topic-page">
+  <a routerLink="/topics" class="breadcrumb">← Danh sách đề tài</a>
+  @if (notice) { <div class="alert success" role="status">{{ notice }}</div> }
+  @if (loading()) {
+    <div class="state panel" role="status"><span class="spinner" aria-hidden="true"></span><h3>Đang tải chi tiết…</h3></div>
+  } @else if (error()) {
+    <div class="state panel" role="alert"><h3>Chưa tải được đề tài</h3><p>{{ error() }}</p>
+      <button type="button" class="button secondary" (click)="reload()">Thử lại</button></div>
+  } @else if (topic(); as item) {
+    <div class="page-heading"><div><p class="eyebrow">{{ item.topicCode }}</p><h2>{{ item.topicName }}</h2>
+      <p class="muted">{{ item.field || "Chưa phân loại lĩnh vực" }}</p></div>
+      <span class="badge" [class.available]="hasSlots(item)">{{ statusLabel(item) }}</span></div>
+    <div class="detail-grid">
+      <section class="description panel"><h3>Mô tả đề tài</h3>
+        <p class="description-text">{{ item.description || "Đề tài chưa có mô tả." }}</p>
+        <dl class="dates"><div><dt>Ngày tạo</dt><dd>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+          <div><dt>Cập nhật gần nhất</dt><dd>{{ item.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd></div></dl>
+      </section>
+      <aside class="summary panel"><h3>Thông tin đề tài</h3>
+        <dl><div><dt>Giảng viên phụ trách</dt><dd>Tài khoản #{{ item.lecturerId }}</dd></div>
+          <div><dt>Số sinh viên tối đa</dt><dd>{{ item.maxStudents }}</dd></div>
+          <div><dt>Sinh viên đã duyệt</dt><dd>{{ item.currentStudents }}</dd></div>
+          <div><dt>Chỗ còn lại</dt><dd>{{ item.maxStudents > item.currentStudents ? item.maxStudents - item.currentStudents : 0 }}</dd></div></dl>
+        <div class="meter" aria-hidden="true"><span [style.width.%]="occupancy(item)"></span></div>
+        <p class="capacity-note">Số lượng được cập nhật khi đăng ký được duyệt hoặc hủy duyệt.</p>
+        @if (canManage()) {
+          <div class="detail-actions"><a [routerLink]="['/topics', item.id, 'edit']" class="button primary">Sửa đề tài</a>
+            <button type="button" class="button danger-button" [disabled]="item.currentStudents > 0" (click)="deleting.set(true)">Xóa đề tài</button></div>
+          @if (item.currentStudents > 0) { <p class="capacity-note">Đề tài đã có sinh viên được duyệt nên chưa thể xóa.</p> }
+        }
+        <button type="button" class="text-button refresh-link" (click)="reload()">↻ Cập nhật số lượng</button>
+      </aside>
+    </div>
+    @if (deleting()) { <app-topic-delete-dialog [topic]="item" (closed)="deleting.set(false)" (deleted)="deleted()" /> }
+  }
+</div>
