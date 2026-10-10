@@ -1,90 +1,112 @@
 package com.graduation.gateway.config;
 
+import java.nio.charset.StandardCharsets;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+
 import reactor.core.publisher.Mono;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class GatewaySecurityConfig {
-	@Bean
-	SecretKey jwtSecretKey(@Value("${jwt.secret}") String secret) {
-		byte[] b = secret.getBytes(StandardCharsets.UTF_8);
-		if (b.length < 32)
-			throw new IllegalStateException("JWT_SECRET phải có ít nhất 32 bytes để dùng HS256");
-		return new SecretKeySpec(b, "HmacSHA256");
-	}
 
-	@Bean
-	ReactiveJwtDecoder jwtDecoder(SecretKey key, @Value("${jwt.issuer}") String issuer) {
-		var d = NimbusReactiveJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
-		d.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
-		return d;
-	}
+    @Bean
+    SecretKey jwtSecretKey(
+            @Value("${jwt.secret}") String secret) {
 
-	@Bean
-	SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-			Converter<Jwt, Mono<AbstractAuthenticationToken>> c) {
+        byte[] bytes =
+                secret.getBytes(StandardCharsets.UTF_8);
 
-		return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
+        if (bytes.length < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET phải có ít nhất 32 bytes để dùng HS256");
+        }
 
-				.authorizeExchange(e -> e
+        return new SecretKeySpec(
+                bytes,
+                "HmacSHA256");
+    }
 
-						// Public
-						.pathMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+    @Bean
+    ReactiveJwtDecoder jwtDecoder(
+            SecretKey key,
+            @Value("${jwt.issuer}") String issuer) {
 
-						.pathMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+        NimbusReactiveJwtDecoder decoder =
+                NimbusReactiveJwtDecoder
+                        .withSecretKey(key)
+                        .macAlgorithm(MacAlgorithm.HS256)
+                        .build();
 
-						// Authenticated user APIs
-						.pathMatchers("/api/users/**").authenticated()
+        decoder.setJwtValidator(
+                JwtValidators.createDefaultWithIssuer(issuer));
 
-						// API nội bộ để các service tra cứu User
-						.pathMatchers(HttpMethod.GET, "/api/auth/users/**").authenticated()
+        return decoder;
+    }
 
-						// Topic
-						// Counter chỉ được gọi giữa các service qua Eureka.
-						.pathMatchers("/api/topics/*/registrations/*/capacity").denyAll()
+    @Bean
+    SecurityWebFilterChain securityWebFilterChain(
+            ServerHttpSecurity http,
+            Converter<Jwt, Mono<AbstractAuthenticationToken>>
+                    jwtAuthenticationConverter) {
 
-						.pathMatchers(HttpMethod.GET, "/api/topics/**").hasAnyRole("STUDENT", "LECTURER", "ADMIN")
+        return http
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
 
-						.pathMatchers(HttpMethod.POST, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
+                .authorizeExchange(exchange -> exchange
 
-						.pathMatchers(HttpMethod.PUT, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
+                        // =========================
+                        // Public
+                        // =========================
 
-						.pathMatchers(HttpMethod.DELETE, "/api/topics/**").hasAnyRole("LECTURER", "ADMIN")
+                        .pathMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/register",
+                                "/api/auth/login")
+                        .permitAll()
 
-						// Registration + Notification
-						.pathMatchers(HttpMethod.PUT, "/api/registrations/*/status")
-						.hasAnyRole("LECTURER", "ADMIN")
+                        .pathMatchers(
+                                HttpMethod.GET,
+                                "/actuator/health")
+                        .permitAll()
 
-						.pathMatchers(HttpMethod.DELETE, "/api/registrations/*")
-						.hasAnyRole("LECTURER", "ADMIN")
+                        // =========================
+                        // User
+                        // =========================
 
-						.pathMatchers("/api/registrations/**", "/api/notifications/**").authenticated()
+                        .pathMatchers("/api/users/**")
+                        .authenticated()
 
-						.anyExchange().authenticated())
+                        // API phục vụ các service tra cứu User
+                        .pathMatchers(
+                                HttpMethod.GET,
+                                "/api/auth/users/**")
+                        .authenticated()
 
-				.oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(c)))
+                        // =========================
+                        // Topic
+                        // =========================
 
-<<<<<<< Updated upstream
-				.build();
-	}
-}
-=======
                         /*
                          * API capacity chỉ dùng cho giao tiếp
-                         * giữa các service qua Eureka.
-                         * Client bên ngoài không được gọi
-                         * thông qua Gateway.
+                         * giữa Registration Service và Topic Service.
+                         *
+                         * Client bên ngoài không được gọi endpoint này
+                         * thông qua API Gateway.
                          */
                         .pathMatchers(
                                 "/api/topics/*/registrations/*/capacity")
@@ -123,26 +145,33 @@ public class GatewaySecurityConfig {
                         // Registration
                         // =========================
 
-                        // Sinh viên được tạo đăng ký đề tài
+                        /*
+                         * Chỉ STUDENT được tạo đăng ký.
+                         * Registration Service sẽ kiểm tra userId
+                         * trong JWT và chống đăng ký thay người khác.
+                         */
                         .pathMatchers(
                                 HttpMethod.POST,
                                 "/api/registrations")
                         .hasRole("STUDENT")
 
                         /*
-                         * API hiện trả dữ liệu đăng ký chung,
-                         * chưa kiểm tra ownership của sinh viên.
-                         * Vì vậy tạm thời chỉ Lecturer/Admin xem.
+                         * STUDENT được phép gọi GET nhưng
+                         * Registration Service chỉ trả đăng ký
+                         * thuộc chính sinh viên đang đăng nhập.
+                         *
+                         * LECTURER và ADMIN được phép xem
+                         * danh sách đăng ký theo quyền backend.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
                                 "/api/registrations/**")
                         .hasAnyRole(
+                                "STUDENT",
                                 "LECTURER",
-                                "ADMIN",
-                                "STUDENT")
+                                "ADMIN")
 
-                        // Lecturer/Admin duyệt hoặc từ chối
+                        // Chỉ Lecturer/Admin được duyệt hoặc từ chối
                         .pathMatchers(
                                 HttpMethod.PUT,
                                 "/api/registrations/*/status")
@@ -150,7 +179,7 @@ public class GatewaySecurityConfig {
                                 "LECTURER",
                                 "ADMIN")
 
-                        // Lecturer/Admin được xóa đăng ký
+                        // Chỉ Lecturer/Admin được xóa đăng ký
                         .pathMatchers(
                                 HttpMethod.DELETE,
                                 "/api/registrations/**")
@@ -164,7 +193,7 @@ public class GatewaySecurityConfig {
 
                         /*
                          * API lấy toàn bộ notification.
-                         * Chỉ ADMIN được phép sử dụng.
+                         * Tạm thời chỉ ADMIN được phép sử dụng.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
@@ -172,9 +201,9 @@ public class GatewaySecurityConfig {
                         .hasRole("ADMIN")
 
                         /*
-                         * API theo user hiện chưa kiểm tra
-                         * user đang đăng nhập có đúng là
-                         * chủ sở hữu notification hay không.
+                         * API notification theo user hiện chưa
+                         * kiểm tra ownership đầy đủ.
+                         * Tạm thời chỉ ADMIN được sử dụng.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
@@ -182,15 +211,15 @@ public class GatewaySecurityConfig {
                         .hasRole("ADMIN")
 
                         /*
-                         * Mark-read hiện chưa kiểm tra ownership.
-                         * Tạm thời yêu cầu đã đăng nhập.
+                         * Mark read hiện yêu cầu người dùng
+                         * đã đăng nhập.
                          */
                         .pathMatchers(
                                 HttpMethod.PUT,
                                 "/api/notifications/*/read")
                         .authenticated()
 
-                        // Các request khác bắt buộc đăng nhập
+                        // Các request còn lại phải đăng nhập
                         .anyExchange()
                         .authenticated())
 
@@ -202,4 +231,3 @@ public class GatewaySecurityConfig {
                 .build();
     }
 }
->>>>>>> Stashed changes

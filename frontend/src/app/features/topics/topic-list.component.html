@@ -1,0 +1,77 @@
+<div class="topic-page">
+  <div class="page-heading">
+    <div><p class="eyebrow">ĐỒ ÁN TỐT NGHIỆP</p><h2>Danh sách đề tài</h2>
+      <p class="muted">Khám phá đề tài và theo dõi số sinh viên đã được duyệt.</p></div>
+    @if (canManage()) { <a routerLink="/topics/new" class="button primary">+ Tạo đề tài</a> }
+  </div>
+  @if (notice()) { <div class="alert success" role="status">{{ notice() }}</div> }
+  <section class="stats-grid" aria-label="Thống kê đề tài">
+    <article class="stat"><span>Tổng đề tài</span><strong>{{ loading() || error() ? "—" : topics().length }}</strong></article>
+    <article class="stat"><span>Đề tài còn chỗ</span><strong>{{ loading() || error() ? "—" : availableCount() }}</strong></article>
+    <article class="stat"><span>Sinh viên đã duyệt</span><strong>{{ loading() || error() ? "—" : approvedCount() }}</strong></article>
+  </section>
+  <section class="toolbar panel" aria-label="Tìm kiếm đề tài">
+    <div class="search-control"><label for="topic-search">Tìm đề tài</label>
+      <input id="topic-search" type="search" placeholder="Tên, mã đề tài hoặc lĩnh vực…" [value]="query()"
+        (input)="setFilter('query', $any($event.target).value)" /></div>
+    <div><label for="topic-field">Lĩnh vực</label><select id="topic-field" [value]="field()"
+      (change)="setFilter('field', $any($event.target).value)">
+      <option value="">Tất cả lĩnh vực</option>
+      @for (item of fields(); track item) { <option [value]="item">{{ item }}</option> }
+    </select></div>
+    <div><label for="topic-availability">Tình trạng</label><select id="topic-availability" [value]="availability()"
+      (change)="setFilter('availability', $any($event.target).value)">
+      <option value="">Tất cả</option><option value="available">Còn chỗ</option>
+      <option value="full">Đã đủ sinh viên</option><option value="closed">Chưa mở / đã đóng</option>
+    </select></div>
+    <button class="button secondary refresh" type="button" [disabled]="loading()" (click)="load()">↻ Làm mới</button>
+  </section>
+  @if (loading()) {
+    <div class="state panel" role="status"><span class="spinner" aria-hidden="true"></span><h3>Đang tải đề tài…</h3></div>
+  } @else if (error()) {
+    <div class="state panel" role="alert"><h3>Chưa tải được đề tài</h3><p>{{ error() }}</p>
+      <button class="button secondary" type="button" (click)="load()">Thử lại</button></div>
+  } @else if (filteredTopics().length === 0) {
+    <div class="state panel"><div class="empty-icon" aria-hidden="true">▤</div>
+      <h3>{{ hasFilters() ? "Không tìm thấy đề tài phù hợp" : "Chưa có đề tài" }}</h3>
+      <p>{{ hasFilters() ? "Thử đổi từ khóa hoặc bỏ bộ lọc để xem thêm đề tài." : "Các đề tài sẽ xuất hiện tại đây khi được giảng viên tạo." }}</p>
+      @if (hasFilters()) { <button class="button secondary" type="button" (click)="resetFilters()">Bỏ bộ lọc</button> }
+      @else if (canManage()) { <a routerLink="/topics/new" class="button primary">Tạo đề tài đầu tiên</a> }
+    </div>
+  } @else {
+    <div class="results-heading"><p>{{ filteredTopics().length }} đề tài{{ hasFilters() ? " phù hợp" : "" }}</p>
+      @if (hasFilters()) { <button type="button" class="text-button" (click)="resetFilters()">Bỏ bộ lọc</button> }</div>
+    <div class="topic-grid">
+      @for (topic of visibleTopics(); track topic.id) {
+        <article class="topic-card panel">
+          <div class="card-top"><span class="topic-code">{{ topic.topicCode }}</span>
+            <span class="badge" [class.available]="hasSlots(topic)">{{ statusLabel(topic) }}</span></div>
+          <h3><a [routerLink]="['/topics', topic.id]">{{ topic.topicName }}</a></h3>
+          <p class="topic-description">{{ topic.description || "Chưa có mô tả cho đề tài này." }}</p>
+          <div class="topic-meta"><span>{{ topic.field || "Chưa phân loại" }}</span><span>Giảng viên #{{ topic.lecturerId }}</span></div>
+          <div class="capacity"><div><span>Sinh viên đã duyệt</span><strong>{{ topic.currentStudents }} / {{ topic.maxStudents }}</strong></div>
+            <div class="meter" aria-hidden="true"><span [style.width.%]="occupancy(topic)"></span></div></div>
+          <div class="card-actions"><a [routerLink]="['/topics', topic.id]" class="text-link">Xem chi tiết →</a>
+            @if (canManage()) {
+              <div class="manage-actions"><a [routerLink]="['/topics', topic.id, 'edit']" class="text-button">Sửa</a>
+                <button type="button" class="text-button danger" [disabled]="topic.currentStudents > 0"
+                  [attr.aria-label]="'Xóa đề tài ' + topic.topicCode"
+                  [title]="topic.currentStudents > 0 ? 'Đề tài đã có sinh viên được duyệt' : 'Xóa đề tài'"
+                  (click)="deleteTarget.set(topic)">Xóa</button></div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+    @if (pageCount() > 1) {
+      <nav class="pagination" aria-label="Phân trang đề tài">
+        <button class="button secondary" type="button" [disabled]="currentPage() === 1" (click)="page.set(currentPage() - 1)">← Trước</button>
+        <span aria-live="polite">Trang {{ currentPage() }} / {{ pageCount() }}</span>
+        <button class="button secondary" type="button" [disabled]="currentPage() === pageCount()" (click)="page.set(currentPage() + 1)">Sau →</button>
+      </nav>
+    }
+  }
+</div>
+@if (deleteTarget(); as topic) {
+  <app-topic-delete-dialog [topic]="topic" (closed)="deleteTarget.set(null)" (deleted)="deleted($event)" />
+}

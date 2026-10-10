@@ -1,0 +1,122 @@
+<div class="dashboard-page">
+  <section class="welcome-card">
+    <div>
+      <p class="eyebrow">Hệ thống quản lý đồ án tốt nghiệp</p>
+
+      <h2>Chào mừng bạn trở lại</h2>
+
+      <p class="welcome-description">
+        Theo dõi thông tin tài khoản và truy cập các chức năng của hệ thống tại
+        đây.
+      </p>
+    </div>
+
+    <div class="welcome-status">
+      <span class="status-dot"></span>
+      {{ session()?.status }}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-heading">
+      <div>
+        <h3>Thông tin tài khoản</h3>
+        <p>Thông tin phiên đăng nhập hiện tại của bạn.</p>
+      </div>
+
+      <a routerLink="/profile" class="text-link"> Xem hồ sơ </a>
+    </div>
+
+    <div class="account-grid">
+      <article class="info-card">
+        <div class="icon-box">👤</div>
+
+        <div>
+          <span class="label"> Mã tài khoản </span>
+
+          <strong> #{{ session()?.userId }} </strong>
+        </div>
+      </article>
+
+      <article class="info-card">
+        <div class="icon-box">🎓</div>
+
+        <div>
+          <span class="label"> Vai trò </span>
+
+          <strong>
+            {{ roleLabel(session()?.role) }}
+          </strong>
+        </div>
+      </article>
+
+      <article class="info-card">
+        <div class="icon-box">✓</div>
+
+        <div>
+          <span class="label"> Trạng thái </span>
+
+          <strong class="active-text">
+            {{ session()?.status }}
+          </strong>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-heading">
+      <div>
+        <h3>Truy cập nhanh</h3>
+        <p>Các chức năng thường dùng trong hệ thống.</p>
+      </div>
+    </div>
+
+    <div class="quick-grid">
+      <a routerLink="/topics" class="quick-card">
+        <div class="quick-icon">▤</div>
+        <div class="quick-content">
+          <h4>Đề tài tốt nghiệp</h4>
+          <p>Xem danh sách đề tài và số sinh viên đã được duyệt.</p>
+        </div>
+        <span class="arrow"> → </span>
+      </a>
+      <a routerLink="/profile" class="quick-card">
+        <div class="quick-icon">👤</div>
+
+        <div class="quick-content">
+          <h4>Hồ sơ cá nhân</h4>
+
+          <p>Xem thông tin tài khoản và thông tin cá nhân.</p>
+        </div>
+
+        <span class="arrow"> → </span>
+      </a>
+
+      <a routerLink="/gateway-check" class="quick-card">
+        <div class="quick-icon">⚙</div>
+
+        <div class="quick-content">
+          <h4>Trạng thái hệ thống</h4>
+
+          <p>Kiểm tra kết nối đến các dịch vụ của hệ thống.</p>
+        </div>
+
+        <span class="arrow"> → </span>
+      </a>
+    </div>
+  </section>
+
+  <section class="notice-card">
+    <div class="notice-icon">i</div>
+
+    <div>
+      <strong> Tài khoản đang hoạt động </strong>
+
+      <p>
+        Bạn đã đăng nhập thành công và có thể sử dụng các chức năng được cấp cho
+        vai trò của mình.
+      </p>
+    </div>
+  </section>
+</div>

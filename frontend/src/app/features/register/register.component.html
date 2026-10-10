@@ -1,0 +1,171 @@
+<div class="register-page">
+  <header class="brand-bar">
+    <a routerLink="/login" class="brand">
+      <span class="brand-mark"> G </span>
+
+      <span class="brand-copy">
+        <strong> Graduation Project Management </strong>
+
+        <small> Hệ thống quản lý đồ án tốt nghiệp </small>
+      </span>
+    </a>
+  </header>
+
+  <main class="register-main">
+    <section class="register-card">
+      <div class="heading">
+        <span class="eyebrow"> Tạo tài khoản </span>
+
+        <h1>Đăng ký</h1>
+
+        <p>Điền thông tin để tạo tài khoản mới.</p>
+      </div>
+
+      <div *ngIf="error()" class="alert-error">
+        {{ error() }}
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-grid">
+          <div class="field">
+            <label for="userCode">
+              Mã người dùng
+              <span>*</span>
+            </label>
+
+            <input
+              id="userCode"
+              formControlName="userCode"
+              placeholder="Ví dụ: SV001"
+            />
+
+            <small
+              *ngIf="
+                form.controls.userCode.touched && form.controls.userCode.invalid
+              "
+            >
+              Mã người dùng là bắt buộc, tối đa 30 ký tự.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="fullName">
+              Họ và tên
+              <span>*</span>
+            </label>
+
+            <input
+              id="fullName"
+              formControlName="fullName"
+              placeholder="Nguyễn Văn A"
+            />
+
+            <small
+              *ngIf="
+                form.controls.fullName.touched && form.controls.fullName.invalid
+              "
+            >
+              Họ tên là bắt buộc.
+            </small>
+          </div>
+
+          <div class="field full">
+            <label for="email">
+              Email
+              <span>*</span>
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="example@gmail.com"
+            />
+
+            <small
+              *ngIf="form.controls.email.touched && form.controls.email.invalid"
+            >
+              Email không hợp lệ.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="phone"> Số điện thoại </label>
+
+            <input
+              id="phone"
+              formControlName="phone"
+              placeholder="0123456789"
+            />
+          </div>
+
+          <div class="field">
+            <label for="className"> Lớp </label>
+
+            <input
+              id="className"
+              formControlName="className"
+              placeholder="CNTT K45"
+            />
+          </div>
+
+          <div class="field full">
+            <label for="department"> Khoa / Bộ môn </label>
+
+            <input
+              id="department"
+              formControlName="department"
+              placeholder="Công nghệ thông tin"
+            />
+          </div>
+
+          <div class="field">
+            <label for="password">
+              Mật khẩu
+              <span>*</span>
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              formControlName="password"
+              placeholder="Tối thiểu 6 ký tự"
+            />
+
+            <small
+              *ngIf="
+                form.controls.password.touched && form.controls.password.invalid
+              "
+            >
+              Mật khẩu phải có ít nhất 6 ký tự.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">
+              Xác nhận mật khẩu
+              <span>*</span>
+            </label>
+
+            <input
+              id="confirmPassword"
+              type="password"
+              formControlName="confirmPassword"
+              placeholder="Nhập lại mật khẩu"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="loading()">
+          {{ loading() ? "Đang tạo tài khoản..." : "Đăng ký" }}
+        </button>
+      </form>
+
+      <div class="login-link">
+        Đã có tài khoản?
+
+        <a routerLink="/login"> Đăng nhập </a>
+      </div>
+    </section>
+  </main>
+</div>

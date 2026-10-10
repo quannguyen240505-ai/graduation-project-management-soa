@@ -1,0 +1,122 @@
+<div class="system-page">
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Hệ thống</p>
+
+      <h2>Trạng thái hệ thống</h2>
+
+      <p>Theo dõi tình trạng hoạt động của các dịch vụ hệ thống.</p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="checkSystem()"
+      [disabled]="loading()"
+    >
+      {{ loading() ? "Đang kiểm tra..." : "Làm mới trạng thái" }}
+    </button>
+  </section>
+
+  <section class="summary-card">
+    <div class="summary-icon">✓</div>
+
+    <div>
+      <h3>
+        {{
+          gatewayOnline() && authOnline()
+            ? "Hệ thống đang hoạt động bình thường"
+            : "Một số dịch vụ đang gặp sự cố"
+        }}
+      </h3>
+
+      <p>
+        {{
+          gatewayOnline() && authOnline()
+            ? "Bạn có thể tiếp tục sử dụng các chức năng của hệ thống."
+            : "Vui lòng thử lại sau hoặc liên hệ quản trị viên."
+        }}
+      </p>
+    </div>
+
+    <span
+      class="overall-status"
+      [class.online]="gatewayOnline() && authOnline()"
+    >
+      {{ gatewayOnline() && authOnline() ? "Hoạt động" : "Có sự cố" }}
+    </span>
+  </section>
+
+  <section class="section">
+    <div class="section-heading">
+      <h3>Dịch vụ hệ thống</h3>
+
+      <p>Trạng thái kết nối hiện tại.</p>
+    </div>
+
+    <div class="service-grid">
+      <!-- Gateway -->
+      <article class="service-card">
+        <div class="service-top">
+          <div class="service-icon">G</div>
+
+          <span class="status" [class.online]="gatewayOnline()">
+            <span class="status-dot"></span>
+
+            {{ gatewayOnline() ? "Đang hoạt động" : "Không khả dụng" }}
+          </span>
+        </div>
+
+        <div class="service-body">
+          <h4>Cổng dịch vụ</h4>
+
+          <p>Tiếp nhận và điều phối các yêu cầu trong hệ thống.</p>
+        </div>
+
+        <div class="service-footer">
+          <span> Trạng thái </span>
+
+          <strong>
+            {{ gatewayStatus() }}
+          </strong>
+        </div>
+      </article>
+
+      <!-- Auth -->
+      <article class="service-card">
+        <div class="service-top">
+          <div class="service-icon">A</div>
+
+          <span class="status" [class.online]="authOnline()">
+            <span class="status-dot"></span>
+
+            {{ authOnline() ? "Đang hoạt động" : "Không khả dụng" }}
+          </span>
+        </div>
+
+        <div class="service-body">
+          <h4>Dịch vụ tài khoản</h4>
+
+          <p>Quản lý đăng nhập, xác thực và thông tin người dùng.</p>
+        </div>
+
+        <div class="service-footer">
+          <span> Trạng thái </span>
+
+          <strong>
+            {{ authStatus() }}
+          </strong>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section *ngIf="checkedAt()" class="last-check">
+    <span class="check-icon"> ✓ </span>
+
+    <span>
+      Kiểm tra gần nhất:
+      {{ checkedAt() | date: "HH:mm:ss - dd/MM/yyyy" }}
+    </span>
+  </section>
+</div>
