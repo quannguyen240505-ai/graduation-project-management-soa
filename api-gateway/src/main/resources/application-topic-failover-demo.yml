@@ -1,0 +1,51 @@
+# List routes thay thế list mặc định khi bật profile, giữ đủ cả năm route.
+spring:
+  cloud:
+    loadbalancer:
+      cache:
+        enabled: false
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/api/auth/**
+            - id: auth-users
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/api/users/**
+            - id: topic-service
+              uri: lb://TOPIC-SERVICE
+              predicates:
+                - Path=/api/topics/**
+              metadata:
+                connect-timeout: 1000
+                response-timeout: 3000
+              filters:
+                - name: Retry
+                  args:
+                    retries: 2
+                    methods: GET
+                    series: SERVER_ERROR
+                    exceptions:
+                      - java.io.IOException
+                      - java.util.concurrent.TimeoutException
+                    backoff:
+                      firstBackoff: 50ms
+                      maxBackoff: 200ms
+                      factor: 2
+                      basedOnPreviousValue: false
+            - id: registration-service
+              uri: lb://REGISTRATION-SERVICE
+              predicates:
+                - Path=/api/registrations/**
+            - id: notification-service
+              uri: lb://NOTIFICATION-SERVICE
+              predicates:
+                - Path=/api/notifications/**
+
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5

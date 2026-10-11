@@ -1,0 +1,25 @@
+# Chỉ dùng khi demo hai instance trên cùng một máy.
+server:
+  port: ${TOPIC_PORT:8082}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/graduation_management}
+    username: ${DB_USERNAME:root}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+  client:
+    healthcheck:
+      enabled: true
+    initial-instance-info-replication-interval-seconds: 2
+    instance-info-replication-interval-seconds: 10
+    registry-fetch-interval-seconds: 5

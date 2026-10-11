@@ -1,0 +1,834 @@
+{
+  "info": {
+    "name": "Topic Failover - 8082 và 8085",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Chạy từng folder theo docs/topic-failover-demo.md; dừng/khởi động service giữa các folder. GET chỉ đọc dữ liệu. Token và password để trống khi chia sẻ."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "gatewayURL",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "registryURL",
+      "value": "http://localhost:8761",
+      "type": "string"
+    },
+    {
+      "key": "topic8082URL",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "topic8085URL",
+      "value": "http://localhost:8085",
+      "type": "string"
+    },
+    {
+      "key": "userCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Đăng nhập qua Gateway",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{gatewayURL}}/api/auth/login",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userCode\": \"{{userCode}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Đăng nhập thành công', () => {",
+              " pm.response.to.have.status(200);",
+              " const token = pm.response.json().accessToken;",
+              " pm.expect(token).to.be.a('string').and.not.empty;",
+              " pm.collectionVariables.set('accessToken',token);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Cả hai bản UP",
+      "item": [
+        {
+          "name": "Eureka có hai Topic UP",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{registryURL}}/eureka/apps/TOPIC-SERVICE",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Eureka có hai UP', () => {",
+                  " pm.response.to.have.status(200);",
+                  " let instances = pm.response.json().application.instance;",
+                  " if (!Array.isArray(instances)) instances = [instances];",
+                  " const ids = instances.filter(i => i.status === 'UP').map(i => i.instanceId).sort();",
+                  " pm.expect(ids).to.eql(['topic-service:8082','topic-service:8085']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Topic 8082",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{topic8082URL}}/actuator/health",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health UP', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('UP'); });",
+                  "pm.test('Đúng instance', () => pm.expect(pm.response.headers.get('X-Topic-Instance')).to.eql('topic-service:8082'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Topic 8085",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{topic8085URL}}/actuator/health",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health UP', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('UP'); });",
+                  "pm.test('Đúng instance', () => pm.expect(pm.response.headers.get('X-Topic-Instance')).to.eql('topic-service:8085'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('seenInstances','[]');",
+                  "pm.collectionVariables.unset('topicSnapshot');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET 3",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET 4",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});",
+                  "pm.test('Đã quan sát cả hai instance', () => pm.expect(JSON.parse(pm.collectionVariables.get('seenInstances') || '[]').sort()).to.eql(['topic-service:8082','topic-service:8085']));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Chỉ còn bản 8085",
+      "item": [
+        {
+          "name": "Health Topic 8085",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{topic8085URL}}/actuator/health",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health UP', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('UP'); });",
+                  "pm.test('Đúng instance', () => pm.expect(pm.response.headers.get('X-Topic-Instance')).to.eql('topic-service:8085'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi dừng 8082 - 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi dừng 8082 - 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi dừng 8082 - 3",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi dừng 8082 - 4",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi dừng 8082 - 5",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Không token phải 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Bật lại bản 8082",
+      "item": [
+        {
+          "name": "Eureka có hai Topic UP",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{registryURL}}/eureka/apps/TOPIC-SERVICE",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Eureka có hai UP', () => {",
+                  " pm.response.to.have.status(200);",
+                  " let instances = pm.response.json().application.instance;",
+                  " if (!Array.isArray(instances)) instances = [instances];",
+                  " const ids = instances.filter(i => i.status === 'UP').map(i => i.instanceId).sort();",
+                  " pm.expect(ids).to.eql(['topic-service:8082','topic-service:8085']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Topic 8082",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{topic8082URL}}/actuator/health",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health UP', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('UP'); });",
+                  "pm.test('Đúng instance', () => pm.expect(pm.response.headers.get('X-Topic-Instance')).to.eql('topic-service:8082'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi bật lại - 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('seenInstances','[]');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi bật lại - 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi bật lại - 3",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway GET sau khi bật lại - 4",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function canonical(v) {",
+                  "  if (Array.isArray(v)) return v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));",
+                  "  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])]));",
+                  "  return v;",
+                  "}",
+                  "pm.test('HTTP 200 và header đúng', () => {",
+                  " pm.response.to.have.status(200);",
+                  " const id = pm.response.headers.get('X-Topic-Instance');",
+                  " pm.expect(['topic-service:8082','topic-service:8085']).to.include(id);",
+                  " const seen = JSON.parse(pm.collectionVariables.get('seenInstances') || '[]');",
+                  " if (!seen.includes(id)) seen.push(id);",
+                  " pm.collectionVariables.set('seenInstances',JSON.stringify(seen));",
+                  "});",
+                  "pm.test('Dữ liệu không đổi qua các instance', () => {",
+                  " const body = pm.response.json(); pm.expect(body).to.be.an('array');",
+                  " const snapshot = JSON.stringify(canonical(body));",
+                  " const before = pm.collectionVariables.get('topicSnapshot');",
+                  " if (!before) pm.collectionVariables.set('topicSnapshot',snapshot);",
+                  " else pm.expect(snapshot).to.eql(before);",
+                  "});",
+                  "pm.test('Đã quan sát cả hai instance', () => pm.expect(JSON.parse(pm.collectionVariables.get('seenInstances') || '[]').sort()).to.eql(['topic-service:8082','topic-service:8085']));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Cả hai bản ngừng",
+      "item": [
+        {
+          "name": "Gateway khi cả hai Topic ngừng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayURL}}/api/topics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('5xx có giới hạn thời gian', () => {",
+                  " pm.expect(pm.response.code).to.be.within(500,599);",
+                  " pm.expect(pm.response.responseTime).to.be.below(15000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
