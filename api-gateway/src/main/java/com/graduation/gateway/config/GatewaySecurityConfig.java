@@ -101,6 +101,7 @@ public class GatewaySecurityConfig {
                         // Topic
                         // =========================
 
+<<<<<<< Updated upstream
                         /*
                          * API capacity chỉ dùng cho giao tiếp
                          * giữa Registration Service và Topic Service.
@@ -231,3 +232,8 @@ public class GatewaySecurityConfig {
                 .build();
     }
 }
+=======
+				.build();
+	}
+}
+>>>>>>> Stashed changes
