@@ -88,7 +88,8 @@ public class GatewaySecurityConfig {
                         // User
                         // =========================
 
-                        .pathMatchers("/api/users/**")
+                        .pathMatchers(
+                                "/api/users/**")
                         .authenticated()
 
                         // API phục vụ các service tra cứu User
@@ -192,34 +193,39 @@ public class GatewaySecurityConfig {
                         // =========================
 
                         /*
-                         * API lấy toàn bộ notification.
-                         * Tạm thời chỉ ADMIN được phép sử dụng.
+                         * Người dùng đã đăng nhập
+                         * được phép xem danh sách notification.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
                                 "/api/notifications")
-                        .hasRole("ADMIN")
+                        .authenticated()
 
                         /*
-                         * API notification theo user hiện chưa
-                         * kiểm tra ownership đầy đủ.
-                         * Tạm thời chỉ ADMIN được sử dụng.
+                         * Người dùng đã đăng nhập
+                         * được phép xem notification theo user.
+                         *
+                         * Ownership nên được kiểm tra tiếp
+                         * ở Notification Service.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
                                 "/api/notifications/user/**")
-                        .hasRole("ADMIN")
+                        .authenticated()
 
                         /*
-                         * Mark read hiện yêu cầu người dùng
-                         * đã đăng nhập.
+                         * Người dùng đã đăng nhập
+                         * được phép đánh dấu notification đã đọc.
                          */
                         .pathMatchers(
                                 HttpMethod.PUT,
                                 "/api/notifications/*/read")
                         .authenticated()
 
-                        // Các request còn lại phải đăng nhập
+                        // =========================
+                        // Các request còn lại
+                        // =========================
+
                         .anyExchange()
                         .authenticated())
 

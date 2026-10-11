@@ -143,6 +143,19 @@ export const routes: Routes = [
             (m) => m.RegistrationsComponent,
           ),
       },
+      // =========================
+      // Notification
+      // =========================
+
+      {
+        path: "notifications",
+        loadComponent: () =>
+          import(
+            "./features/notifications/notifications.component"
+          ).then(
+            (m) => m.NotificationsComponent,
+          ),
+      },
 
       // =========================
       // System status
@@ -156,13 +169,6 @@ export const routes: Routes = [
           ).then(
             (m) => m.GatewayCheckComponent,
           ),
-      },
-      {
-        path: 'notifications',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/notifications/notifications.component')
-            .then(m => m.NotificationsComponent)
       },
 
       {
