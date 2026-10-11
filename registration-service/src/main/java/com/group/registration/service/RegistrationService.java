@@ -18,6 +18,8 @@ import com.group.registration.dto.TopicCapacityRequest;
 import com.group.registration.entity.Registration;
 import com.group.registration.repository.RegistrationRepository;
 import feign.FeignException;
+import com.group.registration.event.RegistrationCreatedEvent;
+import com.group.registration.producer.RegistrationEventProducer;
 
 @Service
 public class RegistrationService {
@@ -28,15 +30,18 @@ public class RegistrationService {
     private final RegistrationRepository repository;
     private final StudentClient studentClient;
     private final TopicClient topicClient;
+    private final RegistrationEventProducer registrationEventProducer;
 
     public RegistrationService(
             RegistrationRepository repository,
             StudentClient studentClient,
-            TopicClient topicClient) {
+            TopicClient topicClient,
+            RegistrationEventProducer registrationEventProducer) {
 
         this.repository = repository;
         this.studentClient = studentClient;
         this.topicClient = topicClient;
+        this.registrationEventProducer = registrationEventProducer;
     }
 
     @Transactional(readOnly = true)
