@@ -19,6 +19,7 @@ import com.group.registration.entity.Registration;
 import com.group.registration.repository.RegistrationRepository;
 import feign.FeignException;
 import com.group.registration.event.RegistrationCreatedEvent;
+import com.group.registration.event.RegistrationStatusChangedEvent;
 import com.group.registration.producer.RegistrationEventProducer;
 
 @Service
@@ -230,39 +231,76 @@ public class RegistrationService {
         if (status == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "status không được để trống");
+                    "status không được để trống"
+            );
         }
 
-        String normalizedStatus = status.trim().toUpperCase(Locale.ROOT);
+        String normalizedStatus =
+                status.trim().toUpperCase(Locale.ROOT);
 
         if (!ALLOWED_STATUSES.contains(normalizedStatus)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Status chỉ được phép là PENDING, APPROVED hoặc REJECTED");
+                    "Status chỉ được phép là "
+                            + "PENDING, APPROVED hoặc REJECTED"
+            );
         }
 
-        Registration registration = findForUpdate(id);
-        long version = registration.getCapacityVersion();
+        Registration registration =
+                findForUpdate(id);
 
-        if (!normalizedStatus.equals(registration.getStatus())
-                || ("APPROVED".equals(normalizedStatus) && version == 0)) {
+        // Giữ lại trạng thái cũ để kiểm tra
+        // có thực sự thay đổi hay không.
+        String oldStatus =
+                registration.getStatus();
+
+        long version =
+                registration.getCapacityVersion();
+
+        if (!normalizedStatus.equals(oldStatus)
+                || ("APPROVED".equals(normalizedStatus)
+                    && version == 0)) {
+
             version = nextVersion(version);
         }
 
-        synchronizeCapacity(registration, normalizedStatus, version, authorization);
+        // Đồng bộ số lượng sinh viên bên Topic Service
+        synchronizeCapacity(
+                registration,
+                normalizedStatus,
+                version,
+                authorization
+        );
 
         registration.setStatus(normalizedStatus);
         registration.setCapacityVersion(version);
-        Registration saved = repository.saveAndFlush(registration);
 
-        // ===== THÊM LOGIC MỚI: AUTO-REJECT PENDING KHÁC =====
-        if ("APPROVED".equals(normalizedStatus)) {
-            autoRejectOtherPendingRegistrations(saved);
+        Registration saved =
+                repository.saveAndFlush(registration);
+
+        // Chỉ gửi notification khi trạng thái
+        // thực sự thay đổi.
+        boolean statusChanged =
+                !normalizedStatus.equals(oldStatus);
+
+        if (statusChanged
+                && ("APPROVED".equals(normalizedStatus)
+                    || "REJECTED".equals(normalizedStatus))) {
+
+            RegistrationStatusChangedEvent event =
+                    new RegistrationStatusChangedEvent(
+                            saved.getId(),
+                            saved.getStudentId(),
+                            saved.getTopicId(),
+                            saved.getStatus()
+                    );
+
+            registrationEventProducer
+                    .publishStatusChanged(event);
         }
 
         return saved;
     }
-
     /**
      * Khi 1 đăng ký được duyệt, tự động từ chối các đăng ký PENDING khác
      * của cùng sinh viên (vì mỗi SV chỉ được duyệt 1 đề tài).
