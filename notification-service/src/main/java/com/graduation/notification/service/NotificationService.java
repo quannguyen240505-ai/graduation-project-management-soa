@@ -3,6 +3,8 @@ package com.graduation.notification.service;
 import com.graduation.notification.entity.Notification;
 import com.graduation.notification.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -32,7 +34,10 @@ public class NotificationService {
         Notification notification = notificationRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Notification not found"));
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Notification not found"
+                        ));
 
         notification.setRead(true);
 

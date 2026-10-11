@@ -175,7 +175,7 @@ public class    RegistrationService {
                     "Sinh viên đã đăng ký đề tài này rồi");
         }
 
-        // ===== BƯỚC 8: Lưu =====
+// ===== BƯỚC 8: Lưu =====
         registration.setId(null);
         registration.setStatus("PENDING");
         registration.setCapacityVersion(0);
@@ -183,6 +183,7 @@ public class    RegistrationService {
         Registration savedRegistration =
                 repository.save(registration);
 
+// ===== BƯỚC 9: Phát sự kiện RabbitMQ =====
         RegistrationCreatedEvent event =
                 new RegistrationCreatedEvent(
                         savedRegistration.getId(),
@@ -191,7 +192,7 @@ public class    RegistrationService {
                         topic.getTopicName()
                 );
 
-        registrationEventProducer.publishRegistrationCreated(event);
+        registrationEventProducer.publish(event);
 
         return savedRegistration;
     }

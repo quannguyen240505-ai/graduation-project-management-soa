@@ -18,19 +18,28 @@ import com.group.registration.dto.StudentDTO;
 import com.group.registration.dto.TopicDTO;
 import com.group.registration.entity.Registration;
 import com.group.registration.repository.RegistrationRepository;
+import com.group.registration.producer.RegistrationEventProducer;
 
 class RegistrationOwnershipTest {
     private RegistrationRepository registrations;
     private StudentClient students;
     private TopicClient topics;
     private RegistrationService service;
+    private RegistrationEventProducer registrationEventProducer;
+
 
     @BeforeEach
     void setUp() {
-        registrations = mock(RegistrationRepository.class);
+        registrationEventProducer =
+                mock(RegistrationEventProducer.class);
         students = mock(StudentClient.class);
         topics = mock(TopicClient.class);
-        service = new RegistrationService(registrations, students, topics);
+        service = new RegistrationService(
+                registrations,
+                students,
+                topics,
+                registrationEventProducer
+        );
     }
 
     private Jwt token(long userId, String role) {

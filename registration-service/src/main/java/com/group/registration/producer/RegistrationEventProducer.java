@@ -4,9 +4,6 @@ import com.group.registration.event.RegistrationCreatedEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
-/**
- * Publishes registration events to RabbitMQ.
- */
 @Component
 public class RegistrationEventProducer {
 
@@ -23,12 +20,7 @@ public class RegistrationEventProducer {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    /**
-     * Publishes an event after a registration is created successfully.
-     *
-     * @param event registration-created event
-     */
-    public void publishRegistrationCreated(
+    public void publish(
             RegistrationCreatedEvent event) {
 
         rabbitTemplate.convertAndSend(

@@ -17,7 +17,11 @@
     <artifactId>notification-service</artifactId>
 
     <dependencies>
-
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.1.1</version>
+        </dependency>
         <!-- REST API -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,8 +1,5 @@
 package com.group.registration.event;
 
-/**
- * Event published when a student successfully registers for a topic.
- */
 public class RegistrationCreatedEvent {
 
     private Long registrationId;
