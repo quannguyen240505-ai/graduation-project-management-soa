@@ -3,7 +3,6 @@ package com.group.registration.dto;
 public class TopicDTO {
 
     private Long id;
-    private String topicName;
     private Integer maxStudents;
     private Integer currentStudents;
     private String status;
@@ -17,14 +16,6 @@ public class TopicDTO {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getTopicName() {
-        return topicName;
-    }
-
-    public void setTopicName(String topicName) {
-        this.topicName = topicName;
     }
 
     public Integer getMaxStudents() {

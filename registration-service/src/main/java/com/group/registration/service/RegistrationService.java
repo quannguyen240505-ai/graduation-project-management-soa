@@ -18,11 +18,9 @@ import com.group.registration.dto.TopicCapacityRequest;
 import com.group.registration.entity.Registration;
 import com.group.registration.repository.RegistrationRepository;
 import feign.FeignException;
-import com.group.registration.event.RegistrationCreatedEvent;
-import com.group.registration.producer.RegistrationEventProducer;
 
 @Service
-public class    RegistrationService {
+public class RegistrationService {
 
     private static final Set<String> ALLOWED_STATUSES =
             Set.of("PENDING", "APPROVED", "REJECTED");
@@ -30,18 +28,15 @@ public class    RegistrationService {
     private final RegistrationRepository repository;
     private final StudentClient studentClient;
     private final TopicClient topicClient;
-    private final RegistrationEventProducer registrationEventProducer;
 
     public RegistrationService(
             RegistrationRepository repository,
             StudentClient studentClient,
-            TopicClient topicClient,
-            RegistrationEventProducer registrationEventProducer) {
+            TopicClient topicClient) {
 
         this.repository = repository;
         this.studentClient = studentClient;
         this.topicClient = topicClient;
-        this.registrationEventProducer = registrationEventProducer;
     }
 
     @Transactional(readOnly = true)
@@ -190,20 +185,7 @@ public class    RegistrationService {
         registration.setStatus("PENDING");
         registration.setCapacityVersion(0);
 
-        Registration savedRegistration =
-                repository.save(registration);
-
-        RegistrationCreatedEvent event =
-                new RegistrationCreatedEvent(
-                        savedRegistration.getId(),
-                        savedRegistration.getStudentId(),
-                        savedRegistration.getTopicId(),
-                        topic.getTopicName()
-                );
-
-        registrationEventProducer.publishRegistrationCreated(event);
-
-        return savedRegistration;
+        return repository.save(registration);
     }
 
     private Long authenticatedUserId(Jwt jwt) {
