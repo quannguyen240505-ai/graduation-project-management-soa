@@ -1,0 +1,6 @@
+# Chỉ bật ở buổi demo cục bộ, không thay đổi cấu hình mặc định.
+eureka:
+  server:
+    enable-self-preservation: false
+    eviction-interval-timer-in-ms: 5000
+    use-read-only-response-cache: false
