@@ -18,11 +18,9 @@ import com.group.registration.dto.TopicCapacityRequest;
 import com.group.registration.entity.Registration;
 import com.group.registration.repository.RegistrationRepository;
 import feign.FeignException;
-import com.group.registration.event.RegistrationCreatedEvent;
-import com.group.registration.producer.RegistrationEventProducer;
 
 @Service
-public class    RegistrationService {
+public class RegistrationService {
 
     private static final Set<String> ALLOWED_STATUSES =
             Set.of("PENDING", "APPROVED", "REJECTED");
@@ -30,31 +28,38 @@ public class    RegistrationService {
     private final RegistrationRepository repository;
     private final StudentClient studentClient;
     private final TopicClient topicClient;
-    private final RegistrationEventProducer registrationEventProducer;
 
     public RegistrationService(
             RegistrationRepository repository,
             StudentClient studentClient,
-            TopicClient topicClient,
-            RegistrationEventProducer registrationEventProducer) {
+            TopicClient topicClient) {
 
         this.repository = repository;
         this.studentClient = studentClient;
         this.topicClient = topicClient;
-        this.registrationEventProducer = registrationEventProducer;
     }
 
     @Transactional(readOnly = true)
     public List<Registration> getAll(Jwt jwt) {
         Long userId = authenticatedUserId(jwt);
         String role = jwt.getClaimAsString("role");
+
+        // DEBUG LOG
+        System.out.println("===== GET REGISTRATIONS =====");
+        System.out.println("User ID: " + userId);
+        System.out.println("Role: " + role);
+        System.out.println("=============================");
+
         if ("STUDENT".equals(role)) {
             return repository.findByStudentId(userId);
         }
+
         if ("LECTURER".equals(role) || "ADMIN".equals(role)) {
             return repository.findAll();
         }
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
                 "Không có quyền xem danh sách đăng ký");
     }
 
@@ -210,6 +215,7 @@ public class    RegistrationService {
         return number.longValue();
     }
 
+
     @Transactional
     public Registration updateStatus(
             Long id,
@@ -242,8 +248,40 @@ public class    RegistrationService {
 
         registration.setStatus(normalizedStatus);
         registration.setCapacityVersion(version);
+        Registration saved = repository.saveAndFlush(registration);
 
-        return repository.saveAndFlush(registration);
+        // ===== THÊM LOGIC MỚI: AUTO-REJECT PENDING KHÁC =====
+        if ("APPROVED".equals(normalizedStatus)) {
+            autoRejectOtherPendingRegistrations(saved);
+        }
+
+        return saved;
+    }
+
+    /**
+     * Khi 1 đăng ký được duyệt, tự động từ chối các đăng ký PENDING khác
+     * của cùng sinh viên (vì mỗi SV chỉ được duyệt 1 đề tài).
+     */
+    private void autoRejectOtherPendingRegistrations(Registration approvedRegistration) {
+        List<Registration> otherPending = repository
+                .findByStudentIdAndStatusAndIdNot(
+                        approvedRegistration.getStudentId(),
+                        "PENDING",
+                        approvedRegistration.getId());
+
+        if (otherPending.isEmpty()) {
+            return;
+        }
+
+        System.out.println(">>> AUTO-REJECT " + otherPending.size()
+                + " PENDING registrations của SV " + approvedRegistration.getStudentId());
+
+        for (Registration pending : otherPending) {
+            pending.setStatus("REJECTED");
+            pending.setUpdatedAt(java.time.LocalDateTime.now());
+            pending.setNote(pending.getNote() + " [Tự động từ chối: SV đã được duyệt đề tài khác]");
+            repository.save(pending);
+        }
     }
 
     @Transactional

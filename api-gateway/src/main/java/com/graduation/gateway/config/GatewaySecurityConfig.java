@@ -103,9 +103,10 @@ public class GatewaySecurityConfig {
 
                         /*
                          * API capacity chỉ dùng cho giao tiếp
-                         * giữa các service qua Eureka.
-                         * Client bên ngoài không được gọi
-                         * thông qua Gateway.
+                         * giữa Registration Service và Topic Service.
+                         *
+                         * Client bên ngoài không được gọi endpoint này
+                         * thông qua API Gateway.
                          */
                         .pathMatchers(
                                 "/api/topics/*/registrations/*/capacity")
@@ -144,25 +145,33 @@ public class GatewaySecurityConfig {
                         // Registration
                         // =========================
 
-                        // Sinh viên được tạo đăng ký đề tài
+                        /*
+                         * Chỉ STUDENT được tạo đăng ký.
+                         * Registration Service sẽ kiểm tra userId
+                         * trong JWT và chống đăng ký thay người khác.
+                         */
                         .pathMatchers(
                                 HttpMethod.POST,
                                 "/api/registrations")
                         .hasRole("STUDENT")
 
                         /*
-                         * API hiện trả dữ liệu đăng ký chung,
-                         * chưa kiểm tra ownership của sinh viên.
-                         * Vì vậy tạm thời chỉ Lecturer/Admin xem.
+                         * STUDENT được phép gọi GET nhưng
+                         * Registration Service chỉ trả đăng ký
+                         * thuộc chính sinh viên đang đăng nhập.
+                         *
+                         * LECTURER và ADMIN được phép xem
+                         * danh sách đăng ký theo quyền backend.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
                                 "/api/registrations/**")
                         .hasAnyRole(
+                                "STUDENT",
                                 "LECTURER",
                                 "ADMIN")
 
-                        // Lecturer/Admin duyệt hoặc từ chối
+                        // Chỉ Lecturer/Admin được duyệt hoặc từ chối
                         .pathMatchers(
                                 HttpMethod.PUT,
                                 "/api/registrations/*/status")
@@ -170,7 +179,7 @@ public class GatewaySecurityConfig {
                                 "LECTURER",
                                 "ADMIN")
 
-                        // Lecturer/Admin được xóa đăng ký
+                        // Chỉ Lecturer/Admin được xóa đăng ký
                         .pathMatchers(
                                 HttpMethod.DELETE,
                                 "/api/registrations/**")
@@ -184,7 +193,7 @@ public class GatewaySecurityConfig {
 
                         /*
                          * API lấy toàn bộ notification.
-                         * Chỉ ADMIN được phép sử dụng.
+                         * Tạm thời chỉ ADMIN được phép sử dụng.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
@@ -192,9 +201,9 @@ public class GatewaySecurityConfig {
                         .hasRole("ADMIN")
 
                         /*
-                         * API theo user hiện chưa kiểm tra
-                         * user đang đăng nhập có đúng là
-                         * chủ sở hữu notification hay không.
+                         * API notification theo user hiện chưa
+                         * kiểm tra ownership đầy đủ.
+                         * Tạm thời chỉ ADMIN được sử dụng.
                          */
                         .pathMatchers(
                                 HttpMethod.GET,
@@ -202,15 +211,15 @@ public class GatewaySecurityConfig {
                         .hasRole("ADMIN")
 
                         /*
-                         * Mark-read hiện chưa kiểm tra ownership.
-                         * Tạm thời yêu cầu đã đăng nhập.
+                         * Mark read hiện yêu cầu người dùng
+                         * đã đăng nhập.
                          */
                         .pathMatchers(
                                 HttpMethod.PUT,
                                 "/api/notifications/*/read")
                         .authenticated()
 
-                        // Các request khác bắt buộc đăng nhập
+                        // Các request còn lại phải đăng nhập
                         .anyExchange()
                         .authenticated())
 

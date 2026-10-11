@@ -1,19 +1,11 @@
 spring:
   application:
     name: registration-service
-
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-
   datasource:
     url: jdbc:mysql://localhost:3306/graduation_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
   jpa:
     hibernate:
       ddl-auto: update
