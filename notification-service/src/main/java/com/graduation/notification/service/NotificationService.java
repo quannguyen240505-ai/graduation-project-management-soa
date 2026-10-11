@@ -30,14 +30,23 @@ public class NotificationService {
                 .findByUserIdOrderByCreatedAtDesc(userId);
     }
 
-    public Notification markAsRead(Long id) {
-        Notification notification = notificationRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Notification not found"
-                        ));
+    public Notification markAsRead(
+            Long id,
+            Long userId) {
+
+        Notification notification =
+                notificationRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Notification not found"));
+
+        if (!notification.getUserId().equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Không thể thay đổi thông báo của người dùng khác");
+        }
 
         notification.setRead(true);
 

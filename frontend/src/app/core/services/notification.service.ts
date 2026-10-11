@@ -1,30 +1,20 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from "@angular/common/http";
+import { Injectable, inject } from "@angular/core";
+import { Observable } from "rxjs";
 
-import { Notification } from '../models/notification.model';
+import { Notification } from "../models/notification.model";
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: "root",
 })
 export class NotificationService {
+  private readonly http = inject(HttpClient);
 
-    private readonly http = inject(HttpClient);
+  getMine(): Observable<Notification[]> {
+    return this.http.get<Notification[]>("/api/notifications/me");
+  }
 
-    getAll(): Observable<Notification[]> {
-        return this.http.get<Notification[]>('/api/notifications');
-    }
-
-    getByUser(userId: number): Observable<Notification[]> {
-        return this.http.get<Notification[]>(
-            `/api/notifications/user/${userId}`
-        );
-    }
-
-    markAsRead(id: number): Observable<Notification> {
-        return this.http.put<Notification>(
-            `/api/notifications/${id}/read`,
-            {}
-        );
-    }
+  markAsRead(id: number): Observable<Notification> {
+    return this.http.put<Notification>(`/api/notifications/${id}/read`, {});
+  }
 }

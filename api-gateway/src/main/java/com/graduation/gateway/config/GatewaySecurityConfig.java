@@ -187,37 +187,29 @@ public class GatewaySecurityConfig {
                                 "LECTURER",
                                 "ADMIN")
 
-                        // =========================
-                        // Notification
-                        // =========================
+                     // =========================
+                     // Notification
+                     // =========================
 
-                        /*
-                         * API lấy toàn bộ notification.
-                         * Tạm thời chỉ ADMIN được phép sử dụng.
-                         */
-                        .pathMatchers(
-                                HttpMethod.GET,
-                                "/api/notifications")
-                        .hasRole("ADMIN")
+                     .pathMatchers(
+                             HttpMethod.GET,
+                             "/api/notifications/me")
+                     .authenticated()
 
-                        /*
-                         * API notification theo user hiện chưa
-                         * kiểm tra ownership đầy đủ.
-                         * Tạm thời chỉ ADMIN được sử dụng.
-                         */
-                        .pathMatchers(
-                                HttpMethod.GET,
-                                "/api/notifications/user/**")
-                        .hasRole("ADMIN")
+                     .pathMatchers(
+                             HttpMethod.GET,
+                             "/api/notifications")
+                     .hasRole("ADMIN")
 
-                        /*
-                         * Mark read hiện yêu cầu người dùng
-                         * đã đăng nhập.
-                         */
-                        .pathMatchers(
-                                HttpMethod.PUT,
-                                "/api/notifications/*/read")
-                        .authenticated()
+                     .pathMatchers(
+                             HttpMethod.GET,
+                             "/api/notifications/user/**")
+                     .hasRole("ADMIN")
+
+                     .pathMatchers(
+                             HttpMethod.PUT,
+                             "/api/notifications/*/read")
+                     .authenticated()
 
                         // Các request còn lại phải đăng nhập
                         .anyExchange()

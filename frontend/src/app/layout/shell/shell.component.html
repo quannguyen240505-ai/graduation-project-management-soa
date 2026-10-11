@@ -9,34 +9,16 @@
       </div>
     </div>
 
-    <nav>
-      <a routerLink="/dashboard" routerLinkActive="active">
-        Tổng quan
-      </a>
+    <nav aria-label="Điều hướng chính">
+      <a routerLink="/dashboard" routerLinkActive="active"> Tổng quan </a>
 
-      <a routerLink="/notifications">
-        Thông báo
-      </a>
+      <a routerLink="/topics" routerLinkActive="active"> Đề tài </a>
 
-      <a routerLink="/topics" routerLinkActive="active">
-        Đề tài
-      </a>
+      <a routerLink="/registrations" routerLinkActive="active"> Đăng ký </a>
 
-      <a routerLink="/notifications">
-        Thông báo
-      </a>
+      <a routerLink="/notifications" routerLinkActive="active"> Thông báo </a>
 
-      <a routerLink="/registrations" routerLinkActive="active">
-        Đăng ký
-      </a>
-
-      <a routerLink="/notifications">
-        Thông báo
-      </a>
-
-      <a routerLink="/profile" routerLinkActive="active">
-        Tài khoản
-      </a>
+      <a routerLink="/profile" routerLinkActive="active"> Tài khoản </a>
 
       <a routerLink="/gateway-check" routerLinkActive="active">
         Trạng thái hệ thống
@@ -58,14 +40,12 @@
     <header class="topbar">
       <div>
         <p>Hệ thống quản lý đồ án tốt nghiệp</p>
-        <h1>Bảng điều khiển</h1>
+        <h1>{{ pageTitle() }}</h1>
       </div>
 
       <div class="account">
         <div class="account-text">
-          <strong>
-            User #{{ session()?.userId }}
-          </strong>
+          <strong> User #{{ session()?.userId }} </strong>
 
           <span>
             {{ session()?.role }}
@@ -80,26 +60,18 @@
       </div>
     </header>
 
-    <nav class="mobile-nav" aria-label="Điều hướng">
-      <a routerLink="/dashboard" routerLinkActive="active">
-        Tổng quan
-      </a>
+    <nav class="mobile-nav" aria-label="Điều hướng di động">
+      <a routerLink="/dashboard" routerLinkActive="active"> Tổng quan </a>
 
-      <a routerLink="/topics" routerLinkActive="active">
-        Đề tài
-      </a>
+      <a routerLink="/topics" routerLinkActive="active"> Đề tài </a>
 
-      <a routerLink="/registrations" routerLinkActive="active">
-        Đăng ký
-      </a>
+      <a routerLink="/registrations" routerLinkActive="active"> Đăng ký </a>
 
-      <a routerLink="/profile" routerLinkActive="active">
-        Tài khoản
-      </a>
+      <a routerLink="/notifications" routerLinkActive="active"> Thông báo </a>
 
-      <a routerLink="/gateway-check" routerLinkActive="active">
-        Trạng thái
-      </a>
+      <a routerLink="/profile" routerLinkActive="active"> Tài khoản </a>
+
+      <a routerLink="/gateway-check" routerLinkActive="active"> Trạng thái </a>
     </nav>
 
     <section class="content">
