@@ -1,57 +1,129 @@
-<div class="notification-page">
-  <div class="page-header">
+<section class="notifications-page">
+  <div class="notifications-header">
     <div>
+      <p class="page-eyebrow">TRUNG TÂM THÔNG BÁO</p>
       <h1>Thông báo</h1>
-      <p>Bạn có {{ unreadCount }} thông báo chưa đọc.</p>
+
+      <p class="page-subtitle">
+        Bạn có <strong>{{ unreadCount }}</strong>
+        thông báo chưa đọc.
+      </p>
     </div>
 
-    <button type="button" class="refresh-button" (click)="loadNotifications()">
-      Làm mới
+    <button
+      class="refresh-btn"
+      type="button"
+      (click)="loadNotifications()"
+      [disabled]="loading"
+    >
+      {{ loading ? "Đang tải..." : "Làm mới" }}
     </button>
   </div>
 
+  <!-- Loading -->
   <div *ngIf="loading" class="message">Đang tải thông báo...</div>
 
-  <div *ngIf="error" class="error">
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="error">
     {{ error }}
   </div>
 
-  <div *ngIf="!loading && notifications.length === 0" class="message">
-    Bạn chưa có thông báo nào.
-  </div>
+  <!-- Nội dung -->
+  <ng-container *ngIf="!loading && !error">
+    <div class="notification-summary">
+      <div class="summary-card">
+        <span class="summary-label"> Tổng thông báo </span>
 
-  <div class="notification-list">
-    <article
-      *ngFor="let notification of notifications"
-      class="notification-card"
-      [class.unread]="!notification.read"
+        <strong>
+          {{ notifications.length }}
+        </strong>
+      </div>
+
+      <div class="summary-card unread">
+        <span class="summary-label"> Chưa đọc </span>
+
+        <strong>
+          {{ unreadCount }}
+        </strong>
+      </div>
+
+      <div class="summary-card read">
+        <span class="summary-label"> Đã đọc </span>
+
+        <strong>
+          {{ notifications.length - unreadCount }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- Danh sách thông báo -->
+    <div
+      class="notifications-list"
+      *ngIf="notifications.length > 0; else emptyState"
     >
-      <div class="notification-content">
-        <div class="notification-title-row">
-          <h3>{{ notification.title }}</h3>
+      <article
+        class="notification-card"
+        *ngFor="let notification of notifications"
+        [class.unread]="!notification.read"
+        [class.read]="notification.read"
+      >
+        <div class="notification-top">
+          <div class="notification-title-wrap">
+            <h3>
+              {{ notification.title }}
+            </h3>
 
-          <span class="status" [class.read]="notification.read">
-            {{ notification.read ? "Đã đọc" : "Chưa đọc" }}
+            <span
+              class="status-badge"
+              [class.badge-unread]="!notification.read"
+              [class.badge-read]="notification.read"
+            >
+              {{ notification.read ? "Đã đọc" : "Chưa đọc" }}
+            </span>
+          </div>
+
+          <span class="notification-time">
+            {{ notification.createdAt | date: "dd/MM/yyyy HH:mm" }}
           </span>
         </div>
 
-        <p>
+        <p class="notification-content">
           {{ notification.content }}
         </p>
 
-        <small>
-          {{ notification.createdAt | date: "dd/MM/yyyy HH:mm" }}
-        </small>
-      </div>
+        <div class="notification-actions">
+          <button
+            *ngIf="!notification.read"
+            class="mark-read-btn"
+            type="button"
+            (click)="markAsRead(notification.id)"
+          >
+            <span class="btn-icon">✓</span>
+            Đánh dấu đã đọc
+          </button>
 
-      <button
-        *ngIf="!notification.read"
-        type="button"
-        class="read-button"
-        (click)="markAsRead(notification.id)"
-      >
-        Đánh dấu đã đọc
-      </button>
-    </article>
-  </div>
-</div>
+          <button
+            *ngIf="notification.read"
+            class="done-btn"
+            type="button"
+            disabled
+          >
+            <span class="btn-icon">✓</span>
+            Đã đọc
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <!-- Chưa có thông báo -->
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <div class="empty-icon">🔔</div>
+
+        <h3>Chưa có thông báo nào</h3>
+
+        <p>Hiện tại chưa có thông báo mới cho tài khoản của bạn.</p>
+      </div>
+    </ng-template>
+  </ng-container>
+</section>
