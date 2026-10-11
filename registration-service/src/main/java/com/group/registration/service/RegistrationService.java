@@ -180,12 +180,26 @@ public class RegistrationService {
                     "Sinh viên đã đăng ký đề tài này rồi");
         }
 
-        // ===== BƯỚC 8: Lưu =====
+// ===== BƯỚC 8: Lưu =====
         registration.setId(null);
         registration.setStatus("PENDING");
         registration.setCapacityVersion(0);
 
-        return repository.save(registration);
+        Registration savedRegistration =
+                repository.save(registration);
+
+// ===== BƯỚC 9: Phát sự kiện RabbitMQ =====
+        RegistrationCreatedEvent event =
+                new RegistrationCreatedEvent(
+                        savedRegistration.getId(),
+                        savedRegistration.getStudentId(),
+                        savedRegistration.getTopicId(),
+                        topic.getTopicName()
+                );
+
+        registrationEventProducer.publish(event);
+
+        return savedRegistration;
     }
 
     private Long authenticatedUserId(Jwt jwt) {

@@ -16,6 +16,7 @@ import com.group.registration.dto.TopicCapacityRequest;
 import com.group.registration.dto.TopicDTO;
 import com.group.registration.entity.Registration;
 import com.group.registration.repository.RegistrationRepository;
+import com.group.registration.producer.RegistrationEventProducer;
 
 import feign.FeignException;
 
@@ -26,12 +27,20 @@ class RegistrationCapacityTest {
     private TopicClient topics;
     private RegistrationService service;
     private Registration registration;
+    private RegistrationEventProducer registrationEventProducer;
 
     @BeforeEach
     void prepare() {
         repository = mock(RegistrationRepository.class);
         topics = mock(TopicClient.class);
-        service = new RegistrationService(repository, mock(StudentClient.class), topics);
+        registrationEventProducer = mock(RegistrationEventProducer.class);
+
+        service = new RegistrationService(
+                repository,
+                mock(StudentClient.class),
+                topics,
+                registrationEventProducer
+        );
         registration = new Registration();
         registration.setId(20L);
         registration.setTopicId(10L);
