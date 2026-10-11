@@ -6,6 +6,7 @@ public class TopicDTO {
     private Integer maxStudents;
     private Integer currentStudents;
     private String status;
+    private String topicName;
 
     public TopicDTO() {
     }
@@ -40,5 +41,12 @@ public class TopicDTO {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    public String getTopicName() {
+        return topicName;
+    }
+
+    public void setTopicName(String topicName) {
+        this.topicName = topicName;
     }
 }

@@ -14,12 +14,24 @@
         Tổng quan
       </a>
 
+      <a routerLink="/notifications">
+        Thông báo
+      </a>
+
       <a routerLink="/topics" routerLinkActive="active">
         Đề tài
       </a>
 
+      <a routerLink="/notifications">
+        Thông báo
+      </a>
+
       <a routerLink="/registrations" routerLinkActive="active">
         Đăng ký
+      </a>
+
+      <a routerLink="/notifications">
+        Thông báo
       </a>
 
       <a routerLink="/profile" routerLinkActive="active">
@@ -62,52 +74,30 @@
           </span>
         </div>
 
-        <button
-          class="ghost-btn"
-          type="button"
-          (click)="logout()"
-        >
+        <button class="ghost-btn" type="button" (click)="logout()">
           Đăng xuất
         </button>
       </div>
     </header>
 
-    <nav
-      class="mobile-nav"
-      aria-label="Điều hướng"
-    >
-      <a
-        routerLink="/dashboard"
-        routerLinkActive="active"
-      >
+    <nav class="mobile-nav" aria-label="Điều hướng">
+      <a routerLink="/dashboard" routerLinkActive="active">
         Tổng quan
       </a>
 
-      <a
-        routerLink="/topics"
-        routerLinkActive="active"
-      >
+      <a routerLink="/topics" routerLinkActive="active">
         Đề tài
       </a>
 
-      <a
-        routerLink="/registrations"
-        routerLinkActive="active"
-      >
+      <a routerLink="/registrations" routerLinkActive="active">
         Đăng ký
       </a>
 
-      <a
-        routerLink="/profile"
-        routerLinkActive="active"
-      >
+      <a routerLink="/profile" routerLinkActive="active">
         Tài khoản
       </a>
 
-      <a
-        routerLink="/gateway-check"
-        routerLinkActive="active"
-      >
+      <a routerLink="/gateway-check" routerLinkActive="active">
         Trạng thái
       </a>
     </nav>

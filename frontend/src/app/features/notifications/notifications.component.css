@@ -1,0 +1,86 @@
+.notification-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0;
+}
+
+.page-header p {
+    margin: 6px 0 0;
+}
+
+.notification-list {
+    display: grid;
+    gap: 14px;
+}
+
+.notification-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.notification-card.unread {
+    font-weight: 500;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.notification-title-row h3 {
+    margin: 0 0 10px;
+}
+
+.status {
+    white-space: nowrap;
+}
+
+.read-button,
+.refresh-button {
+    cursor: pointer;
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid #bbb;
+    background: #fff;
+}
+
+.message,
+.error {
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.error {
+    border: 1px solid #ccc;
+}
+
+@media (max-width: 700px) {
+
+    .page-header,
+    .notification-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
