@@ -4,6 +4,7 @@ import com.graduation.notification.event.RegistrationCreatedEvent;
 import com.graduation.notification.producer.RegistrationEventProducer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Collections;
 
 import java.util.Map;
 
@@ -26,7 +27,10 @@ public class RabbitMqDemoController {
 
         producer.publish(event);
         return ResponseEntity.accepted().body(
-                Map.of("message", "registration.created event published")
+                Collections.singletonMap(
+                        "message",
+                        "registration.created event published"
+                )
         );
     }
 }

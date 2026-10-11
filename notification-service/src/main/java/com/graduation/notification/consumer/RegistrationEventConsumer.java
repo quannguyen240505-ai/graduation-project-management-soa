@@ -21,7 +21,7 @@ public class RegistrationEventConsumer {
     @RabbitListener(queues = RabbitMqConfig.NOTIFICATION_REGISTRATION_QUEUE)
     public void handleRegistrationCreated(RegistrationCreatedEvent event) {
         String topicLabel =
-                event.getTopicName() != null && !event.getTopicName().isBlank()
+                event.getTopicName() != null && !event.getTopicName().trim().isEmpty()
                         ? "\"" + event.getTopicName() + "\""
                         : "ID " + event.getTopicId();
 
